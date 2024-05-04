@@ -1,8 +1,11 @@
-import { GameMode, launchAndGo, startGame } from "./browser/browser";
+import { BrowserManager } from "./browser/browser";
 
 async function main() {
-  const {browser, page} = await launchAndGo();
-  startGame(page, GameMode.HARD);
+  const browserManger = new BrowserManager();
+  await browserManger.launchAndGo();
+  await browserManger.startGame();
+  await browserManger.openPosition(1, 1);
+  console.log(await browserManger.getNumbers());
 };
 
 main();

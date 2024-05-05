@@ -36,10 +36,10 @@ export class Solver {
     const oldCells = this.cells;
     this.cleanKnowledgeBase(cells);
     let newSentences: Sentence[] = this.createNewSentences(oldCells);
-    this.cells = cells;
     while (newSentences.length !== 0) {
       newSentences = this.addSentences(newSentences);
     }
+    this.cleanup();
     return this.getCellsToOpen();
   }
 
@@ -48,6 +48,12 @@ export class Solver {
     const oldKnowledge = this.knowledge;
     this.knowledge = [];
     this.cells = cells;
+    this.addSentences(oldKnowledge);
+  }
+
+  private cleanup() {
+    const oldKnowledge = this.knowledge;
+    this.knowledge = [];
     this.addSentences(oldKnowledge);
   }
 

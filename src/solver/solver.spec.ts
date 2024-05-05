@@ -4,7 +4,6 @@ import expect from "expect";
 import { Coordinate } from "../browser/browser";
 
 const expectArraysAreSame = (arr1: Coordinate[], arr2: Coordinate[]) => {
-  console.log(arr1, arr2);
   if (arr1.length !== arr2.length) {
     expect(true).toBe(false);
   }

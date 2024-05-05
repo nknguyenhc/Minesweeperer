@@ -17,13 +17,13 @@ export class Solver {
 
   public numToCoord(num: number): Coordinate {
     return {
-      x: num % this.height,
-      y: Math.floor(num / this.height),
+      x: num % this.width,
+      y: Math.floor(num / this.width),
     };
   }
 
   public coordToNum(coord: Coordinate): number {
-    return coord.x + coord.y * this.height;
+    return coord.x + coord.y * this.width;
   }
 
   /**
@@ -58,6 +58,9 @@ export class Solver {
       for (let j = 0; j < this.width; j++) {
         if (this.cells[i][j] !== 8) {
           assert(this.cells[i][j] === cells[i][j]);
+          continue;
+        }
+        if (cells[i][j] === 8) {
           continue;
         }
         const newSentence = this.getCellSentence(cells, i, j);

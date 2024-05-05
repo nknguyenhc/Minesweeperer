@@ -19,7 +19,7 @@ const numberRgb = [
   [176, 212, 84], // not opened
 ];
 
-type Coordinate = {
+export type Coordinate = {
   x: number,
   y: number,
 };

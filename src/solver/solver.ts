@@ -36,10 +36,13 @@ export class Solver {
     const oldCells = this.cells;
     this.cleanKnowledgeBase(cells);
     let newSentences: Sentence[] = this.createNewSentences(oldCells);
-    while (newSentences.length !== 0) {
-      newSentences = this.addSentences(newSentences);
+    let isNewKnowledgeAdded = true;
+    while (isNewKnowledgeAdded || newSentences.length > 0) {
+      isNewKnowledgeAdded = this.addSentences(newSentences);
+      let isKnowledgeAddedFromCleanup: boolean;
+      [newSentences, isKnowledgeAddedFromCleanup] = this.cleanup();
+      isNewKnowledgeAdded = isNewKnowledgeAdded || isKnowledgeAddedFromCleanup;
     }
-    this.cleanup();
     return this.getCellsToOpen();
   }
 
@@ -51,10 +54,11 @@ export class Solver {
     this.addSentences(oldKnowledge);
   }
 
-  private cleanup() {
+  private cleanup(): [Sentence[], boolean] {
     const oldKnowledge = this.knowledge;
     this.knowledge = [];
-    this.addSentences(oldKnowledge);
+    const isKnowledgeAdded = this.addSentences(oldKnowledge);
+    return [this.forwardChain(), isKnowledgeAdded];
   }
 
   /**
@@ -143,15 +147,15 @@ export class Solver {
    * @param sentences Sentences to add to the knowledge base in this iteration.
    * @returns Sentences to add to the knowledge base in the next iteration.
    */
-  private addSentences(sentences: Sentence[]): Sentence[] {
-    const usefulSentences: Sentence[] = [];
+  private addSentences(sentences: Sentence[]): boolean {
+    let isKnowledgeAdded = false;
     for (let sentenceToAdd of sentences) {
       let isReplaced = false;
       sentenceToAdd = sentenceToAdd.reduce(this);
       if (sentenceToAdd.isTrivial()) {
         continue;
       }
-      this.updateSafesAndMinesFromSentence(sentenceToAdd);
+      isKnowledgeAdded = isKnowledgeAdded || this.updateSafesAndMinesFromSentence(sentenceToAdd);
       sentenceToAdd = sentenceToAdd.reduce(this);
       if (sentenceToAdd.isTrivial()) {
         continue;
@@ -164,39 +168,64 @@ export class Solver {
             break;
           }
           let newSentence = this.knowledge[oldSentenceI].combine(sentenceToAdd).reduce(this);
-          this.updateSafesAndMinesFromSentence(newSentence);
-          this.knowledge[oldSentenceI] = newSentence;
+          isKnowledgeAdded = isKnowledgeAdded || this.updateSafesAndMinesFromSentence(newSentence);
           newSentence = newSentence.reduce(this);
-          if (!newSentence.isTrivial()) {
-            usefulSentences.push(newSentence);
-          }
+          this.knowledge[oldSentenceI] = newSentence;
           break;
         }
       }
       if (!isReplaced) {
         this.knowledge.push(sentenceToAdd);
-        usefulSentences.push(sentenceToAdd);
       }
     }
-    return this.forwardChain(usefulSentences);
+    return isKnowledgeAdded;
   }
 
   /**
    * Performs a forward chain to obtain new sentences.
-   * Assuming that the given sentences are already added to the knowledge base.
+   * New sentences must be useful in the knowledge base.
    */
-  private forwardChain(sentences: Sentence[]): Sentence[] {
+  private forwardChain(): Sentence[] {
     const newSentences: Sentence[] = [];
-    for (const newSentence of sentences) {
-      for (const sentence of this.knowledge) {
-        const pairSentences = newSentence.newSentences(sentence);
-        newSentences.push(...pairSentences);
+    for (let i = 0; i < this.knowledge.length; i++) {
+      for (let j = 0; j < this.knowledge.length; j++) {
+        if (i === j) {
+          continue;
+        }
+        const pairSentences = this.knowledge[i].newSentences(this.knowledge[j]);
+        for (let newSentence of pairSentences) {
+          newSentence = newSentence.reduce(this);
+          if (newSentence.isTrivial()) {
+            continue;
+          }
+          newSentences.push(newSentence);
+        }
+      }
+    }
+    return this.removeDuplicateSentences(newSentences);
+  }
+
+  /**
+   * Returns a new list of sentences that are not present in the current knowledge base.
+   */
+  private removeDuplicateSentences(sentences: Sentence[]): Sentence[] {
+    const newSentences: Sentence[] = [];
+    for (const sentence of sentences) {
+      let isDuplicate = false;
+      for (const currentSentence of this.knowledge) {
+        if (sentence.equals(currentSentence)) {
+          isDuplicate = true;
+          break;
+        }
+      }
+      if (!isDuplicate) {
+        newSentences.push(sentence);
       }
     }
     return newSentences;
   }
 
-  private updateSafesAndMinesFromSentence(sentence: Sentence): void {
+  private updateSafesAndMinesFromSentence(sentence: Sentence): boolean {
     for (const position of sentence.getSureMines()) {
       const coord = this.numToCoord(position);
       this.mines[coord.y][coord.x] = true;
@@ -204,6 +233,7 @@ export class Solver {
     for (const position of sentence.getSureSafes()) {
       this.safes.add(position);
     }
+    return sentence.getSureMines().size > 0 || sentence.getSureSafes().size > 0;
   } 
 
   /**
@@ -436,5 +466,14 @@ class Sentence {
    */
   public isSomethingNewWith(sentence: Sentence): boolean {
     return this.lower > sentence.lower || this.upper < sentence.upper;
+  }
+
+  /**
+   * Determines if two sentences are saying the exact same thing.
+   */
+  public equals(sentence: Sentence): boolean {
+    const intersection = Sentence.positionIntersection(this.positions, sentence.positions);
+    return intersection.size === this.positions.size && intersection.size === sentence.positions.size
+      && this.lower === sentence.lower && this.upper === sentence.upper;
   }
 }

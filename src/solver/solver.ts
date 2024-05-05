@@ -33,8 +33,9 @@ export class Solver {
    * @returns The cells that can be uncovered next.
    */
   public update(cells: number[][]): Coordinate[] {
+    const oldCells = this.cells;
     this.cleanKnowledgeBase(cells);
-    let newSentences: Sentence[] = this.createNewSentences(cells);
+    let newSentences: Sentence[] = this.createNewSentences(oldCells);
     this.cells = cells;
     while (newSentences.length !== 0) {
       newSentences = this.addSentences(newSentences);
@@ -44,14 +45,10 @@ export class Solver {
 
   private cleanKnowledgeBase(cells: number[][]): void {
     this.safes = new Set();
-    const newKnowledge: Sentence[] = [];
-    for (const sentence of this.knowledge) {
-      const newSentence = sentence.reduce(cells, this);
-      if (!newSentence.isTrivial()) {
-        newKnowledge.push(newSentence);
-      }
-    }
-    this.knowledge = newKnowledge;
+    const oldKnowledge = this.knowledge;
+    this.knowledge = [];
+    this.cells = cells;
+    this.addSentences(oldKnowledge);
   }
 
   /**
@@ -60,18 +57,18 @@ export class Solver {
    * so that we only create sentences on new uncovered cells.
    * This routine is to be called to kickstart forward chaining.
    */
-  private createNewSentences(cells: number[][]): Sentence[] {
+  private createNewSentences(oldCells: number[][]): Sentence[] {
     const newSentences: Sentence[] = [];
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
-        if (this.cells[i][j] !== 8) {
-          assert(this.cells[i][j] === cells[i][j]);
+        if (oldCells[i][j] !== 8) {
+          assert(oldCells[i][j] === this.cells[i][j]);
           continue;
         }
-        if (cells[i][j] === 8) {
+        if (this.cells[i][j] === 8) {
           continue;
         }
-        const newSentence = this.getCellSentence(cells, i, j);
+        const newSentence = this.getCellSentence(i, j);
         if (!newSentence.isTrivial()) {
           newSentences.push(newSentence);
         }
@@ -82,18 +79,17 @@ export class Solver {
 
   /**
    * Get the sentence on the surrouding cells. Exclude cells with mines.
-   * @param cells The board of cells.
    * @param i The row index of the cell to calculate.
    * @param j The column index of the cell to calculate.
    * @returns First element is the set of free cells, second element is the count of mines.
    */
-  private getCellSentence(cells: number[][], i: number, j: number): Sentence {
-    let count = cells[i][j];
+  private getCellSentence(i: number, j: number): Sentence {
+    let count = this.cells[i][j];
     const positions: Set<number> = new Set();
     for (let ii = i - 1; ii <= i + 1; ii++) {
       for (let jj = j - 1; jj <= j + 1; jj++) {
-        if (this.isCellFree(cells, ii, jj)) {
-          if (this.isSureMine(ii, jj)) {
+        if (this.isCellFree(ii, jj)) {
+          if (this.isSureMine(jj, ii)) {
             count--;
           } else {
             positions.add(this.coordToNum({
@@ -110,15 +106,14 @@ export class Solver {
   /**
    * Returns whether the cell has not been opened.
    * False if the coordinates are invalid.
-   * @param cells The board to look up the cell.
    * @param i X-coordinate of the cell.
    * @param j Y-coordinate of the cell.
    */
-  private isCellFree(cells: number[][], i: number, j: number): boolean {
+  public isCellFree(i: number, j: number): boolean {
     if (i < 0 || i >= this.height || j < 0 || j >= this.width) {
       return false;
     }
-    return cells[i][j] === 8;
+    return this.cells[i][j] === 8;
   }
 
   /**
@@ -144,18 +139,28 @@ export class Solver {
    */
   private addSentences(sentences: Sentence[]): Sentence[] {
     const usefulSentences: Sentence[] = [];
-    for (const sentenceToAdd of sentences) {
+    for (let sentenceToAdd of sentences) {
       let isReplaced = false;
+      sentenceToAdd = sentenceToAdd.reduce(this);
+      if (sentenceToAdd.isTrivial()) {
+        continue;
+      }
+      this.updateSafesAndMinesFromSentence(sentenceToAdd);
+      sentenceToAdd = sentenceToAdd.reduce(this);
+      if (sentenceToAdd.isTrivial()) {
+        continue;
+      }
+
       for (let oldSentenceI = 0; oldSentenceI < this.knowledge.length; oldSentenceI++) {
         if (this.knowledge[oldSentenceI].isCompeting(sentenceToAdd)) {
           isReplaced = true;
           if (!sentenceToAdd.isSomethingNewWith(this.knowledge[oldSentenceI])) {
             break;
           }
-          let newSentence = this.knowledge[oldSentenceI].combine(sentenceToAdd).reduce(this.cells, this);
+          let newSentence = this.knowledge[oldSentenceI].combine(sentenceToAdd).reduce(this);
           this.updateSafesAndMinesFromSentence(newSentence);
           this.knowledge[oldSentenceI] = newSentence;
-          newSentence = newSentence.reduce(this.cells, this);
+          newSentence = newSentence.reduce(this);
           if (!newSentence.isTrivial()) {
             usefulSentences.push(newSentence);
           }
@@ -163,17 +168,8 @@ export class Solver {
         }
       }
       if (!isReplaced) {
-        let newSentence = sentenceToAdd.reduce(this.cells, this);
-        if (newSentence.isTrivial()) {
-          continue;
-        }
-        this.updateSafesAndMinesFromSentence(newSentence);
-        newSentence = newSentence.reduce(this.cells, this);
-        if (newSentence.isTrivial()) {
-          continue;
-        }
-        this.knowledge.push(newSentence);
-        usefulSentences.push(newSentence);
+        this.knowledge.push(sentenceToAdd);
+        usefulSentences.push(sentenceToAdd);
       }
     }
     return this.forwardChain(usefulSentences);
@@ -386,13 +382,13 @@ class Sentence {
    * @param solver The agent to reduce for.
    * @returns The new reduced sentence.
    */
-  public reduce(cells: number[][], solver: Solver): Sentence {
+  public reduce(solver: Solver): Sentence {
     const positions: Set<number> = new Set();
     let lower = this.lower;
     let upper = this.upper;
     for (const position of this.positions) {
       const coordinate = solver.numToCoord(position);
-      if (cells[coordinate.y][coordinate.x] === 8) {
+      if (solver.isCellFree(coordinate.y, coordinate.x)) {
         if (solver.isSureMine(coordinate.x, coordinate.y)) {
           lower--;
           upper--;

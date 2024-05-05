@@ -2,17 +2,18 @@ import assert from 'assert';
 import { Coordinate } from '../browser/browser';
 
 export class Solver {
-  private readonly cells: number[][];
+  private cells: number[][];
   private readonly width: number;
   private readonly height: number;
   private knowledge: Sentence[] = [];
   private readonly mines: boolean[][];
+  private safes: Set<number> = new Set();
 
   constructor(width: number, height: number) {
-    this.cells = Array(height).fill(Array(width).fill(8));
+    this.cells = Array(height).fill(undefined).map(() => Array(width).fill(8));
     this.width = width;
     this.height = height;
-    this.mines = Array(height).fill(Array(width).fill(false));
+    this.mines = Array(height).fill(undefined).map(() => Array(width).fill(false));
   }
 
   public numToCoord(num: number): Coordinate {
@@ -34,14 +35,15 @@ export class Solver {
   public update(cells: number[][]): Coordinate[] {
     this.cleanKnowledgeBase(cells);
     let newSentences: Sentence[] = this.createNewSentences(cells);
+    this.cells = cells;
     while (newSentences.length !== 0) {
       newSentences = this.addSentences(newSentences);
     }
-    this.updateMines();
     return this.getCellsToOpen();
   }
 
   private cleanKnowledgeBase(cells: number[][]): void {
+    this.safes = new Set();
     const newKnowledge: Sentence[] = [];
     for (const sentence of this.knowledge) {
       const newSentence = sentence.reduce(cells, this);
@@ -52,6 +54,12 @@ export class Solver {
     this.knowledge = newKnowledge;
   }
 
+  /**
+   * Creates new sentences from the cells.
+   * The cells are first compared with the current cells,
+   * so that we only create sentences on new uncovered cells.
+   * This routine is to be called to kickstart forward chaining.
+   */
   private createNewSentences(cells: number[][]): Sentence[] {
     const newSentences: Sentence[] = [];
     for (let i = 0; i < this.height; i++) {
@@ -121,6 +129,13 @@ export class Solver {
   }
 
   /**
+   * Determines whether the positionis for sure a safe position.
+   */
+  public isSureSafe(position: number): boolean {
+    return this.safes.has(position);
+  }
+
+  /**
    * Adds the new sentences to the knowledge base.
    * Performs operations of pairs of sentences to generate next sentences
    * to be added to the knowledge base in the next iteration.
@@ -128,27 +143,45 @@ export class Solver {
    * @returns Sentences to add to the knowledge base in the next iteration.
    */
   private addSentences(sentences: Sentence[]): Sentence[] {
-    for (let sentenceToAddI = 0; sentenceToAddI < sentences.length; sentenceToAddI++) {
+    const usefulSentences: Sentence[] = [];
+    for (const sentenceToAdd of sentences) {
       let isReplaced = false;
       for (let oldSentenceI = 0; oldSentenceI < this.knowledge.length; oldSentenceI++) {
-        if (this.knowledge[oldSentenceI].isCompeting(sentences[sentenceToAddI])) {
-          this.knowledge[oldSentenceI] = this.knowledge[oldSentenceI].combine(sentences[sentenceToAddI]);
+        if (this.knowledge[oldSentenceI].isCompeting(sentenceToAdd)) {
           isReplaced = true;
+          if (!sentenceToAdd.isSomethingNewWith(this.knowledge[oldSentenceI])) {
+            break;
+          }
+          let newSentence = this.knowledge[oldSentenceI].combine(sentenceToAdd).reduce(this.cells, this);
+          this.updateSafesAndMinesFromSentence(newSentence);
+          this.knowledge[oldSentenceI] = newSentence;
+          newSentence = newSentence.reduce(this.cells, this);
+          if (!newSentence.isTrivial()) {
+            usefulSentences.push(newSentence);
+          }
           break;
         }
       }
       if (!isReplaced) {
-        this.knowledge.push(sentences[sentenceToAddI]);
+        let newSentence = sentenceToAdd.reduce(this.cells, this);
+        if (newSentence.isTrivial()) {
+          continue;
+        }
+        this.updateSafesAndMinesFromSentence(newSentence);
+        newSentence = newSentence.reduce(this.cells, this);
+        if (newSentence.isTrivial()) {
+          continue;
+        }
+        this.knowledge.push(newSentence);
+        usefulSentences.push(newSentence);
       }
     }
-    return this.forwardChain(sentences);
+    return this.forwardChain(usefulSentences);
   }
 
   /**
    * Performs a forward chain to obtain new sentences.
    * Assuming that the given sentences are already added to the knowledge base.
-   * @param sentences P
-   * @returns 
    */
   private forwardChain(sentences: Sentence[]): Sentence[] {
     const newSentences: Sentence[] = [];
@@ -161,18 +194,15 @@ export class Solver {
     return newSentences;
   }
 
-  /**
-   * Updates the mine map based on the current sentences in the knowledge base.
-   */
-  private updateMines(): void {
-    for (const sentence of this.knowledge) {
-      const sureMines: Set<number> = sentence.getSureMines();
-      for (const position of sureMines) {
-        const coordinates = this.numToCoord(position);
-        this.mines[coordinates.y][coordinates.x] = true;
-      }
+  private updateSafesAndMinesFromSentence(sentence: Sentence): void {
+    for (const position of sentence.getSureMines()) {
+      const coord = this.numToCoord(position);
+      this.mines[coord.y][coord.x] = true;
     }
-  }
+    for (const position of sentence.getSureSafes()) {
+      this.safes.add(position);
+    }
+  } 
 
   /**
    * Returns the cells to open.
@@ -180,18 +210,10 @@ export class Solver {
    * If there are no safe cell, returns one random cell that is not surely a mine.
    */
   private getCellsToOpen(): Coordinate[] {
-    const cells: Coordinate[] = [];
-    for (const sentence of this.knowledge) {
-      const sureSafes: Set<number> = sentence.getSureSafes();
-      for (const position of sureSafes) {
-        cells.push(this.numToCoord(position));
-      }
-    }
-
-    if (cells.length === 0) {
+    if (this.safes.size === 0) {
       return [this.randomCell()];
     } else {
-      return cells;
+      return Array.from(this.safes).map(position => this.numToCoord(position));
     }
   }
 
@@ -234,6 +256,7 @@ class Sentence {
   private readonly upper: number;
 
   private constructor(positions: Set<number>, lower: number, upper: number) {
+    assert(lower >= 0);
     assert(lower <= upper);
     assert(upper <= positions.size);
     this.positions = positions;
@@ -306,6 +329,9 @@ class Sentence {
   public newSentences(sentence: Sentence): Sentence[] {
     const thisDifferencePositions = Sentence.positionDifference(this.positions, sentence.positions);
     const sentenceDifferencePositions = Sentence.positionDifference(sentence.positions, this.positions);
+    if (thisDifferencePositions.size === this.positions.size && sentenceDifferencePositions.size === sentence.positions.size) {
+      return [];
+    }
 
     const thisDifference = this.subtract(sentence, thisDifferencePositions, sentenceDifferencePositions);
     const sentenceDifference = sentence.subtract(this, sentenceDifferencePositions, thisDifferencePositions);
@@ -370,11 +396,13 @@ class Sentence {
         if (solver.isSureMine(coordinate.x, coordinate.y)) {
           lower--;
           upper--;
-        } else {
+        } else if (!solver.isSureSafe(position)) {
           positions.add(position);
         }
       }
     }
+    lower = Math.max(lower, 0);
+    upper = Math.min(upper, positions.size);
     return new Sentence(positions, lower, upper);
   }
 
@@ -398,5 +426,13 @@ class Sentence {
     } else {
       return new Set();
     }
+  }
+
+  /**
+   * Determines if this sentence offers new insights to the given sentence,
+   * given that these two sentences are combinable.
+   */
+  public isSomethingNewWith(sentence: Sentence): boolean {
+    return this.lower > sentence.lower || this.upper < sentence.upper;
   }
 }

@@ -262,17 +262,17 @@ export class Solver {
       }
     }
 
-    const index = Math.random() * count;
+    const index = Math.floor(Math.random() * count);
     count = 0;
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
-        if (count === index) {
-          return {
-            x: j,
-            y: i,
-          }
-        }
         if (this.cells[i][j] === 8 && !this.mines[i][j]) {
+          if (count === index) {
+            return {
+              x: j,
+              y: i,
+            }
+          }
           count++;
         }
       }

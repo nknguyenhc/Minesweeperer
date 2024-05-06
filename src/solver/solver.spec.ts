@@ -364,5 +364,16 @@ describe("Solver", () => {
       expect(moves).toHaveLength(1);
       expect(mines).not.toContain(moves[0]);
     }
-  })
+  });
+
+  it("Should return empty action array when game finishes", () => {
+    const cells = [
+      [8, 1, 0],
+      [3, 4, 2],
+      [8, 8, 8],
+    ];
+
+    const solver = new Solver(3, 3);
+    expect(solver.update(cells)).toEqual([]);
+  });
 });

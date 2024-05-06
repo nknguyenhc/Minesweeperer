@@ -242,11 +242,28 @@ export class Solver {
    * If there are no safe cell, returns one random cell that is not surely a mine.
    */
   private getCellsToOpen(): Coordinate[] {
-    if (this.safes.size === 0) {
+    if (this.safes.size > 0) {
+      return Array.from(this.safes).map(position => this.numToCoord(position));
+    } else if (!this.isGameFinished()) {
       return [this.randomCell()];
     } else {
-      return Array.from(this.safes).map(position => this.numToCoord(position));
+      return [];
     }
+  }
+
+  /**
+   * Determines whether the game has finished,
+   * i.e. all cells are uncovered.
+   */
+  private isGameFinished(): boolean {
+    for (let i = 0; i < this.height; i++) {
+      for (let j = 0; j < this.width; j++) {
+        if (this.cells[i][j] === 8 && !this.mines[i][j]) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   /**

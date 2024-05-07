@@ -12,8 +12,10 @@ async function main() {
   let actions = solver.update(cells);
   while (actions.length !== 0) {
     await browserManger.openPositions(actions);
-    cells = await browserManger.getNumbers()
+    cells = await browserManger.getNumbers();
+    console.log(cells.map(row => row.join(' ')).join('\n'));
     actions = solver.update(cells);
+    console.log(actions);
   }
 };
 

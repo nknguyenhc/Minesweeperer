@@ -42,6 +42,8 @@ export class BrowserManager {
   private readonly yMax = 20;
   private canvasPosition: Coordinate | undefined;
 
+  private count: number = 0;
+
   public async launchAndGo() {
     this.browser = await puppeteer.launch({
       headless: false,
@@ -114,6 +116,11 @@ export class BrowserManager {
   }
 
   public async getNumbers(): Promise<number[][]> {
+    this.count++;
+    this.getPage().screenshot({
+      path: `images/${this.count}.png`,
+    });
+
     const numbers: number[][] = [];
     for (let y = 0; y < this.yMax; y++) {
       const row: number[] = [];

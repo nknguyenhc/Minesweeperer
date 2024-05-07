@@ -8,7 +8,7 @@ export class Solver {
   private knowledge: Sentence[] = [];
   private readonly mines: boolean[][];
   private safes: Set<number> = new Set();
-  private readonly timeLimit = 5000;
+  private readonly timeLimit = 1000;
 
   constructor(width: number, height: number) {
     this.cells = Array(height).fill(undefined).map(() => Array(width).fill(8));
@@ -115,6 +115,10 @@ export class Solver {
         }
       }
     }
+    if (count < 0 || count > positions.size) {
+      console.log("error detected!", i, j, count, positions);
+    }
+    assert(count >= 0 && count <= positions.size);
     return Sentence.ofCount(positions, count);
   }
 

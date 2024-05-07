@@ -125,10 +125,15 @@ export class BrowserManager {
     return numbers;
   }
 
-  public async openPosition(x: number, y: number) {
+  public async openPosition(coordinate: Coordinate): Promise<void> {
     await this.getPage().mouse.click(
-      this.getCanvasPosition().x + (x + 0.5) * this.cellWidth,
-      this.getCanvasPosition().y + (y + 0.5) * this.cellWidth);
+      this.getCanvasPosition().x + (coordinate.x + 0.5) * this.cellWidth,
+      this.getCanvasPosition().y + (coordinate.y + 0.5) * this.cellWidth);
     await sleep(1000);
+    return;
+  }
+
+  public async openPositions(coordinates: Coordinate[]): Promise<void> {
+    return Promise.all(coordinates.map(coordinate => this.openPosition(coordinate))).then(() => {});
   }
 }

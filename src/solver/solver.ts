@@ -8,6 +8,7 @@ export class Solver {
   private knowledge: Sentence[] = [];
   private readonly mines: boolean[][];
   private safes: Set<number> = new Set();
+  private readonly timeLimit = 5000;
 
   constructor(width: number, height: number) {
     this.cells = Array(height).fill(undefined).map(() => Array(width).fill(8));
@@ -33,11 +34,15 @@ export class Solver {
    * @returns The cells that can be uncovered next.
    */
   public update(cells: number[][]): Coordinate[] {
+    const startTime = new Date().getTime();
     const oldCells = this.cells;
     this.cleanKnowledgeBase(cells);
     let newSentences: Sentence[] = this.createNewSentences(oldCells);
     let isNewKnowledgeAdded = true;
     while (isNewKnowledgeAdded || newSentences.length > 0) {
+      if (new Date().getTime() - startTime > this.timeLimit) {
+        break;
+      }
       isNewKnowledgeAdded = this.addSentences(newSentences);
       let isKnowledgeAddedFromCleanup: boolean;
       [newSentences, isKnowledgeAddedFromCleanup] = this.cleanup();

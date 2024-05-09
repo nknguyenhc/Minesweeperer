@@ -1,3 +1,4 @@
+import { AppConfig } from "./appconfig";
 import { BrowserManager } from "./browser/browser";
 import { Solver } from "./solver/solver";
 
@@ -13,11 +14,20 @@ async function main() {
   while (actions.length !== 0) {
     await browserManager.openPositions(actions);
     cells = await browserManager.getNumbers();
-    console.log(cells.map(row => row.join(' ')).join('\n'));
+    if (AppConfig.logInfo) {
+      console.log(cells.map(row => row.join(' ')).join('\n'));
+    }
     actions = solver.update(cells);
-    console.log(actions);
+    if (AppConfig.logInfo) {
+      console.log(actions);
+    }
   }
-  await browserManager.takeFinalScreenshot();
+  if (AppConfig.saveScreenshot) {
+    await browserManager.takeFinalScreenshot();
+  }
+  if (!AppConfig.keepAlive) {
+    await browserManager.close();
+  }
 };
 
 main();

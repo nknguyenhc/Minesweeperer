@@ -1,4 +1,5 @@
 import puppeteer, { Browser, ElementHandle, Page } from "puppeteer";
+import { AppConfig } from "../appconfig";
 
 enum GameMode {
   EASY,
@@ -46,7 +47,7 @@ export class BrowserManager {
 
   public async launchAndGo() {
     this.browser = await puppeteer.launch({
-      headless: false,
+      headless: !AppConfig.liveBrowser,
       args: [
         `--window-size=${this.width},${this.height}`,
       ],
@@ -114,9 +115,11 @@ export class BrowserManager {
 
   public async getNumbers(): Promise<number[][]> {
     this.count++;
-    this.getPage().screenshot({
-      path: `images/${this.count}.png`,
-    });
+    if (AppConfig.logImages) {
+      this.getPage().screenshot({
+        path: `images/${this.count}.png`,
+      });
+    }
 
     const numbers: number[][] = [];
     for (let y = 0; y < this.yMax; y++) {
@@ -133,7 +136,7 @@ export class BrowserManager {
     await this.getPage().mouse.click(
       this.getCanvasPosition().x + (coordinate.x + 0.5) * this.cellWidth,
       this.getCanvasPosition().y + (coordinate.y + 0.5) * this.cellWidth);
-    await sleep(800);
+    await sleep(AppConfig.stepWaitTime);
     return;
   }
 
@@ -144,7 +147,11 @@ export class BrowserManager {
   public async takeFinalScreenshot() {
     await sleep(5000);
     await this.getPage().screenshot({
-      path: `images/final.png`,
+      path: `images/${AppConfig.screenshotName}.png`,
     });
+  }
+
+  public async close() {
+    await this.getBrowser().close();
   }
 }

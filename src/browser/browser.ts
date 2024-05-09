@@ -133,11 +133,18 @@ export class BrowserManager {
     await this.getPage().mouse.click(
       this.getCanvasPosition().x + (coordinate.x + 0.5) * this.cellWidth,
       this.getCanvasPosition().y + (coordinate.y + 0.5) * this.cellWidth);
-    await sleep(1000);
+    await sleep(800);
     return;
   }
 
   public async openPositions(coordinates: Coordinate[]): Promise<void> {
     return Promise.all(coordinates.map(coordinate => this.openPosition(coordinate))).then(() => {});
+  }
+
+  public async takeFinalScreenshot() {
+    await sleep(5000);
+    await this.getPage().screenshot({
+      path: `images/final.png`,
+    });
   }
 }

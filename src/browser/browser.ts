@@ -50,13 +50,10 @@ export class BrowserManager {
       args: [
         `--window-size=${this.width},${this.height}`,
       ],
+      defaultViewport: null,
     });
     this.page = await this.browser.newPage();
 
-    await this.page.setViewport({
-      width: this.width,
-      height: this.height,
-    });
     await this.page.goto(this.url);
     await this.page.waitForNetworkIdle();
   };

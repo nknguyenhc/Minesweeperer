@@ -1,12 +1,10 @@
-import { Solver } from "./solver";
+import { HashSet, Sentence, Solver } from "./solver";
 import { describe, it } from "mocha";
 import expect from "expect";
 import { Coordinate } from "../browser/browser";
 
-const expectArraysAreSame = (arr1: Coordinate[], arr2: Coordinate[]) => {
-  if (arr1.length !== arr2.length) {
-    expect(true).toBe(false);
-  }
+const expectArraysAreSame = <T>(arr1: T[], arr2: T[]) => {
+  expect(arr1.length).toBe(arr2.length);
   for (const elem of arr1) {
     expect(arr2).toContainEqual(elem);
   }
@@ -14,6 +12,46 @@ const expectArraysAreSame = (arr1: Coordinate[], arr2: Coordinate[]) => {
     expect(arr1).toContainEqual(elem);
   }
 }
+
+describe("HashSet", () => {
+  it("Insert and check equality/competing", () => {
+    const set = new HashSet(10);
+    set.insert(Sentence.ofCount(new Set([1, 2]), 2));
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([1, 2]), 2))).toBeTruthy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([1, 2]), 2))).toBeTruthy();
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([1, 2]), 1))).toBeTruthy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([1, 2]), 1))).toBeFalsy();
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([1, 2, 3]), 2))).toBeFalsy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([1, 2, 3]), 2))).toBeFalsy();
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([3, 0]), 2))).toBeFalsy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([3, 0]), 2))).toBeFalsy();
+
+    set.insert(Sentence.ofCount(new Set([3]), 1));
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([3, 0]), 1))).toBeFalsy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([3, 0]), 1))).toBeFalsy();
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([3]), 0))).toBeTruthy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([3]), 1))).toBeTruthy();
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([1, 2]), 2))).toBeTruthy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([1, 2]), 2))).toBeTruthy();
+  });
+
+  it("Delete and check equality/competing", () => {
+    const set = new HashSet(10);
+    set.insert(Sentence.ofCount(new Set([1, 2]), 2));
+    set.insert(Sentence.ofCount(new Set([3]), 1));
+    set.delete(Sentence.ofCount(new Set([3, 0]), 1));
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([3]), 1))).toBeTruthy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([3]), 1))).toBeTruthy();
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([1, 2]), 1))).toBeTruthy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([1, 2]), 2))).toBeTruthy();
+
+    set.delete(Sentence.ofCount(new Set([3]), 1));
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([3]), 1))).toBeFalsy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([3]), 1))).toBeFalsy();
+    expect(set.findCompetingSentence(Sentence.ofCount(new Set([1, 2]), 1))).toBeTruthy();
+    expect(set.findEqualSentence(Sentence.ofCount(new Set([1, 2]), 2))).toBeTruthy();
+  })
+});
 
 describe("Solver", () => {
   it("Initial board with counts 1, 2", () => {

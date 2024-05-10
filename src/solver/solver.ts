@@ -308,10 +308,11 @@ export class Solver {
   }
 }
 
-class Sentence {
+export class Sentence {
   private readonly positions: Set<number>;
   private readonly lower: number;
   private readonly upper: number;
+  private readonly hashCode: number;
 
   private constructor(positions: Set<number>, lower: number, upper: number) {
     assert(lower >= 0);
@@ -320,6 +321,15 @@ class Sentence {
     this.positions = positions;
     this.lower = lower;
     this.upper = upper;
+    this.hashCode = this.calculateHashCode();
+  }
+
+  private calculateHashCode(): number {
+    let result: number = 0;
+    for (const position of this.positions) {
+      result += position;
+    }
+    return result;
   }
 
   public static ofCount(positions: Set<number>, count: number): Sentence {
@@ -495,11 +505,166 @@ class Sentence {
   }
 
   /**
+   * Determines the hash code of this sentence, for hashing algorithm.
+   * The hash code is calculated solely based on the coordinates of the cells it describes.
+   */
+  public hash(): number {
+    return this.hashCode;
+  }
+
+  /**
    * Determines if two sentences are saying the exact same thing.
    */
   public equals(sentence: Sentence): boolean {
     const intersection = Sentence.positionIntersection(this.positions, sentence.positions);
     return intersection.size === this.positions.size && intersection.size === sentence.positions.size
       && this.lower === sentence.lower && this.upper === sentence.upper;
+  }
+}
+
+class HashNode {
+  private readonly sentence: Sentence;
+  private next: HashNode | undefined;
+
+  constructor(sentence: Sentence) {
+    this.sentence = sentence;
+  }
+
+  /**
+   * Find a competing sentence to the given sentence within this chain.
+   * If there is none, return `undefined`.
+   */
+  public findCompetingSentence(sentence: Sentence): Sentence | undefined {
+    if (sentence.isCompeting(this.sentence)) {
+      return this.sentence;
+    }
+    if (this.next === undefined) {
+      return undefined;
+    } else {
+      return this.next.findCompetingSentence(sentence);
+    }
+  }
+
+  /**
+   * Find a sentence equal to the given sentence within this chain.
+   * If there is none, return `undefined`.
+   */
+  public findEqualSentence(sentence: Sentence): Sentence | undefined {
+    if (sentence.equals(this.sentence)) {
+      return this.sentence;
+    }
+    if (this.next === undefined) {
+      return undefined;
+    } else {
+      return this.next.findEqualSentence(sentence);
+    }
+  }
+
+  /**
+   * Inserts the sentence into this chain.
+   * Allows duplicates.
+   */
+  public insert(sentence: Sentence): void {
+    if (this.next === undefined) {
+      this.next = new HashNode(sentence);
+    } else {
+      this.next.insert(sentence);
+    }
+  }
+
+  /**
+   * Deletes a sentence from this chain.
+   * Does nothing if the sentence does not exist in this chain.
+   * @returns A new node that has the provided sentence deleted,
+   *          or the same chain if this chain does not contain the sentence.
+   */
+  public delete(sentence: Sentence): HashNode | undefined {
+    if (sentence.equals(this.sentence)) {
+      return this.next;
+    }
+    if (this.next !== undefined) {
+      this.next = this.next.delete(sentence);
+    }
+    return this;
+  }
+
+  public *[Symbol.iterator](): Generator<Sentence> {
+    let node: HashNode | undefined = this;
+    while (node !== undefined) {
+      yield node.sentence;
+      node = node.next;
+    }
+  }
+}
+
+export class HashSet {
+  private readonly table: Array<HashNode | undefined>;
+
+  constructor(tableSize: number) {
+    this.table = Array(tableSize).fill(undefined);
+  }
+
+  /**
+   * Inserts a sentence into this hash table.
+   */
+  public insert(sentence: Sentence): void {
+    const index = sentence.hash() % this.table.length;
+    const chain = this.table[index];
+    if (chain === undefined) {
+      this.table[index] = new HashNode(sentence);
+    } else {
+      chain.insert(sentence);
+    }
+  }
+
+  /**
+   * Finds a sentence that is equal to the given sentence from this table.
+   * If there is none, return `undefined`.
+   */
+  public findEqualSentence(sentence: Sentence): Sentence | undefined {
+    const index = sentence.hash() % this.table.length;
+    const chain = this.table[index];
+    if (chain === undefined) {
+      return undefined;
+    } else {
+      return chain.findEqualSentence(sentence);
+    }
+  }
+
+  /**
+   * Finds a sentence that is competing with the given sentence from this table.
+   * If there is none, return `undefined`.
+   */
+  public findCompetingSentence(sentence: Sentence): Sentence | undefined {
+    const index = sentence.hash() % this.table.length;
+    const chain = this.table[index];
+    if (chain === undefined) {
+      return undefined;
+    } else {
+      return chain.findCompetingSentence(sentence);
+    }
+  }
+
+  /**
+   * Deletes a given sentence from this table.
+   */
+  public delete(sentence: Sentence): void {
+    const index = sentence.hash() % this.table.length;
+    const chain = this.table[index];
+    if (chain === undefined) {
+      return;
+    }
+    this.table[index] = chain.delete(sentence);
+  }
+
+  public *[Symbol.iterator](): Generator<Sentence> {
+    for (const chain of this.table) {
+      if (chain === undefined) {
+        continue;
+      }
+      for (const sentence of chain) {
+        yield sentence;
+      }
+    }
   }
 }

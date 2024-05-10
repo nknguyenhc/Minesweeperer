@@ -45,7 +45,7 @@ npm i
 npm start
 ```
 
-You can review the script config in [`src/appconfig.ts`](./src/appconfig.ts) to your liking. Most importantly, you can change the difficulty level of the minesweeper game that the script plays.
+You can change the script config in [`src/appconfig.ts`](./src/appconfig.ts) to your liking. Most importantly, you can change the difficulty level of the minesweeper game that the script plays.
 
 ## Concepts
 
@@ -66,7 +66,7 @@ To read number from a cell, notice that each number has a specific color shade. 
 
 This is a classical problem of knowledge representation. "Knowledge" is essentially a collection of sentences, where each sentence indicates a piece of information. Sentences can be combined to form new sentences. Sentences can also be used to determine where the mines and safe cells are. In this problem, we use forward chaining to deduce cells with mines and safe cells at each iteration.
 
-Each sentence indicates the minimum and the maximum of mines within a group of cells. Therefore, each sentence contains the following information:
+Each sentence indicates the minimum and the maximum number of mines within a group of cells. Therefore, each sentence contains the following information:
 
 * `cells`: The set of cells that the sentence points to.
 * `lower`: The minimum total number of mines in the cells.
@@ -100,13 +100,13 @@ Upon receiving the observed board, the agent does the following:
 3. Does a forward chaining loop.
 4. Returns the set of cells that can be opened.
 
-For forward chaining loop, the agent keeps the new sentences obtained from the previous iteration. For the first iteration, the new sentences are the new sentences generated from step 2. One iteration of the forward chaining loop is as follows:
+One iteration of the forward chaining loop is as follows:
 
 1. Add the new sentences to the knowledge base.
 2. For each pair of sentences in the knowledge base, derive new sentences.
 3. Return those new sentences as sentences to be added in step (1) in the next iteration.
 
-It repeats until one of the following conditions is true:
+Forward chaining repeats until one of the following conditions is true:
 
 1. No new sentences are added, and no new cells are found to be safe or mine.
 2. Time is out.
@@ -124,3 +124,5 @@ This is because of inconsistencies in the google page. You can simply run the sc
 2. Detection of numbers.
 
 On the google minesweeper page, it animates for a short period of time when a cell is uncovered. This means that detection of numbers in some cells might be inconsistent. The decision to set wait time after opening cells of 800 is made to balance between the accuracy of cell reading and the runtime.
+
+Furthermore, my tests have never encountered number 7. I cannot know for sure if the script can detect number 7 correctly. In any case that the script fails, you can always run again.

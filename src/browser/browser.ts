@@ -94,7 +94,7 @@ export class BrowserManager {
     const imageData = await this.getPage().evaluate(
       `document.querySelector('canvas.ecwpfc')
         .getContext('2d')
-        .getImageData(${(x + 0.5) * this.cellWidth + 1}, ${(y + 0.5) * this.cellWidth + 1}, ${this.cellOffset}, ${this.cellOffset})`) as ImageData;
+        .getImageData(${(x + 0.5) * this.cellWidth + 1}, ${(y + 0.5) * this.cellWidth}, ${this.cellOffset}, ${this.cellOffset})`) as ImageData;
     const data = imageData.data;
 
     let number: number = 0;

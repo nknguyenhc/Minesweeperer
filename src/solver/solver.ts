@@ -116,7 +116,7 @@ export class Solver {
       }
     }
     if (count < 0 || count > positions.size) {
-      console.log("error detected!", i, j, count, positions);
+      console.log("error detected!", i, j, count, this.cells[i][j], positions);
     }
     assert(count >= 0 && count <= positions.size);
     return Sentence.ofCount(positions, count);

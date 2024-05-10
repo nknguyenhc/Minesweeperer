@@ -1,6 +1,7 @@
 import puppeteer, { Browser, ElementHandle, Page } from "puppeteer";
 import { AppConfig } from "../appconfig";
 import fs from 'fs';
+import { Solver } from "../solver/solver";
 
 enum GameMode {
   EASY,
@@ -38,14 +39,39 @@ export class BrowserManager {
   private browser: Browser | undefined = undefined;
   private page: Page | undefined = undefined;
 
-  private readonly gameMode: GameMode = GameMode.HARD;
+  private readonly gameMode: GameMode;
   private readonly cellOffset = 1;
-  private readonly cellWidth = 25;
-  private readonly xMax = 24;
-  private readonly yMax = 20;
+  private readonly cellWidth;
+  private readonly xMax;
+  private readonly yMax;
   private canvasPosition: Coordinate | undefined;
 
   private count: number = 0;
+
+  constructor() {
+    switch (AppConfig.gameMode) {
+      case "easy":
+        this.gameMode = GameMode.EASY;
+        this.cellWidth = 45;
+        this.xMax = 10;
+        this.yMax = 8;
+        break;
+      case "medium":
+        this.gameMode = GameMode.MEDIUM;
+        this.cellWidth = 30;
+        this.xMax = 18;
+        this.yMax = 14;
+        break;
+      case "hard":
+        this.gameMode = GameMode.HARD;
+        this.cellWidth = 25;
+        this.xMax = 24;
+        this.yMax = 20;
+        break;
+      default:
+        throw new Error(`Unrecognised game mode: "${AppConfig.gameMode}"`);
+    }
+  }
 
   public async launchAndGo() {
     // Create directory if it does not exist
@@ -65,6 +91,10 @@ export class BrowserManager {
     await this.page.goto(this.url);
     await this.page.waitForNetworkIdle();
   };
+
+  public getSolver(): Solver {
+    return new Solver(this.xMax, this.yMax);
+  }
 
   private getPage(): Page {
     return this.page as Page;
@@ -151,8 +181,12 @@ export class BrowserManager {
     return Promise.all(coordinates.map(coordinate => this.openPosition(coordinate))).then(() => {});
   }
 
+  public async openInitial(): Promise<void> {
+    await this.openPosition({ x: Math.floor(this.xMax / 2), y: Math.floor(this.yMax / 2) });
+  }
+
   public async takeFinalScreenshot() {
-    await sleep(5000);
+    await sleep(AppConfig.screenshotWaitTime);
     await this.getPage().screenshot({
       path: `${this.imageDirname}/${AppConfig.screenshotName}.png`,
     });

@@ -1,4 +1,6 @@
 export const AppConfig = {
+  // Difficulty level, 'easy', 'medium', or 'hard'
+  gameMode: 'hard',
   // Whether to keep the window alive when the game has finished
   keepAlive: true,
   // Whether to open a browser. If false, run in headless mode.
@@ -13,4 +15,6 @@ export const AppConfig = {
   saveScreenshot: true,
   // Name of screenshot to save when the game ends
   screenshotName: 'final',
+  // How long to wait after final step before taking final screenshot
+  screenshotWaitTime: 7000,
 }

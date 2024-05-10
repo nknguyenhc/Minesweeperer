@@ -6,9 +6,9 @@ async function main() {
   const browserManager = new BrowserManager();
   await browserManager.launchAndGo();
   await browserManager.startGame();
-  await browserManager.openPosition({ x: 10, y: 10 });
+  await browserManager.openInitial();
   
-  const solver = new Solver(24, 20);
+  const solver = browserManager.getSolver();
   let cells = await browserManager.getNumbers();
   let actions = solver.update(cells);
   while (actions.length !== 0) {

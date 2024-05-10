@@ -1,6 +1,5 @@
 import { AppConfig } from "./appconfig";
 import { BrowserManager } from "./browser/browser";
-import { Solver } from "./solver/solver";
 
 async function main() {
   const browserManager = new BrowserManager();

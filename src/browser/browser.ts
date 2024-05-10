@@ -1,5 +1,6 @@
 import puppeteer, { Browser, ElementHandle, Page } from "puppeteer";
 import { AppConfig } from "../appconfig";
+import fs from 'fs';
 
 enum GameMode {
   EASY,
@@ -33,6 +34,7 @@ export class BrowserManager {
   private readonly width = 1440;
   private readonly height = 800;
   private readonly url = 'https://google.com/search?q=minesweeper';
+  private readonly imageDirname = 'images';
   private browser: Browser | undefined = undefined;
   private page: Page | undefined = undefined;
 
@@ -46,6 +48,11 @@ export class BrowserManager {
   private count: number = 0;
 
   public async launchAndGo() {
+    // Create directory if it does not exist
+    if (!fs.existsSync(this.imageDirname)) {
+      fs.mkdirSync(this.imageDirname);
+    }
+
     this.browser = await puppeteer.launch({
       headless: !AppConfig.liveBrowser,
       args: [
@@ -117,7 +124,7 @@ export class BrowserManager {
     this.count++;
     if (AppConfig.logImages) {
       this.getPage().screenshot({
-        path: `images/${this.count}.png`,
+        path: `${this.imageDirname}/${this.count}.png`,
       });
     }
 
@@ -147,7 +154,7 @@ export class BrowserManager {
   public async takeFinalScreenshot() {
     await sleep(5000);
     await this.getPage().screenshot({
-      path: `images/${AppConfig.screenshotName}.png`,
+      path: `${this.imageDirname}/${AppConfig.screenshotName}.png`,
     });
   }
 

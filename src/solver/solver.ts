@@ -5,7 +5,8 @@ export class Solver {
   private cells: number[][];
   private readonly width: number;
   private readonly height: number;
-  private knowledge: Sentence[] = [];
+  private readonly hashTableSize: number = 200;
+  private knowledge: HashSet = new HashSet(this.hashTableSize);
   private readonly mines: boolean[][];
   private safes: Set<number> = new Set();
   private readonly timeLimit = 1000;
@@ -54,15 +55,15 @@ export class Solver {
   private cleanKnowledgeBase(cells: number[][]): void {
     this.safes = new Set();
     const oldKnowledge = this.knowledge;
-    this.knowledge = [];
+    this.knowledge = new HashSet(this.hashTableSize);
     this.cells = cells;
-    this.addSentences(oldKnowledge);
+    this.addSentences(oldKnowledge.toArray());
   }
 
   private cleanup(): [Sentence[], boolean] {
     const oldKnowledge = this.knowledge;
-    this.knowledge = [];
-    const isKnowledgeAdded = this.addSentences(oldKnowledge);
+    this.knowledge = new HashSet(this.hashTableSize);
+    const isKnowledgeAdded = this.addSentences(oldKnowledge.toArray());
     return [this.forwardChain(), isKnowledgeAdded];
   }
 
@@ -154,12 +155,11 @@ export class Solver {
    * Performs operations of pairs of sentences to generate next sentences
    * to be added to the knowledge base in the next iteration.
    * @param sentences Sentences to add to the knowledge base in this iteration.
-   * @returns Sentences to add to the knowledge base in the next iteration.
+   * @returns Whether new safe cells or new mine cells are discovered.
    */
   private addSentences(sentences: Sentence[]): boolean {
     let isKnowledgeAdded = false;
     for (let sentenceToAdd of sentences) {
-      let isReplaced = false;
       sentenceToAdd = sentenceToAdd.reduce(this);
       if (sentenceToAdd.isTrivial()) {
         continue;
@@ -170,22 +170,19 @@ export class Solver {
         continue;
       }
 
-      for (let oldSentenceI = 0; oldSentenceI < this.knowledge.length; oldSentenceI++) {
-        if (this.knowledge[oldSentenceI].isCompeting(sentenceToAdd)) {
-          isReplaced = true;
-          if (!sentenceToAdd.isSomethingNewWith(this.knowledge[oldSentenceI])) {
-            break;
-          }
-          let newSentence = this.knowledge[oldSentenceI].combine(sentenceToAdd).reduce(this);
-          isKnowledgeAdded = isKnowledgeAdded || this.updateSafesAndMinesFromSentence(newSentence);
-          newSentence = newSentence.reduce(this);
-          this.knowledge[oldSentenceI] = newSentence;
-          break;
-        }
+      const competingSentence = this.knowledge.findCompetingSentence(sentenceToAdd);
+      if (competingSentence === undefined) {
+        this.knowledge.insert(sentenceToAdd);
+        continue;
       }
-      if (!isReplaced) {
-        this.knowledge.push(sentenceToAdd);
+      if (!sentenceToAdd.isSomethingNewWith(competingSentence)) {
+        continue;
       }
+      let newSentence = competingSentence.combine(sentenceToAdd).reduce(this);
+      isKnowledgeAdded = isKnowledgeAdded || this.updateSafesAndMinesFromSentence(newSentence);
+      newSentence = newSentence.reduce(this);
+      this.knowledge.delete(competingSentence);
+      this.knowledge.insert(newSentence);
     }
     return isKnowledgeAdded;
   }
@@ -195,13 +192,14 @@ export class Solver {
    * New sentences must be useful in the knowledge base.
    */
   private forwardChain(): Sentence[] {
+    const knowledgeArray = this.knowledge.toArray();
     const newSentences: Sentence[] = [];
-    for (let i = 0; i < this.knowledge.length; i++) {
-      for (let j = 0; j < this.knowledge.length; j++) {
+    for (let i = 0; i < knowledgeArray.length; i++) {
+      for (let j = 0; j < knowledgeArray.length; j++) {
         if (i === j) {
           continue;
         }
-        const pairSentences = this.knowledge[i].newSentences(this.knowledge[j]);
+        const pairSentences = knowledgeArray[i].newSentences(knowledgeArray[j]);
         for (let newSentence of pairSentences) {
           newSentence = newSentence.reduce(this);
           if (newSentence.isTrivial()) {
@@ -327,7 +325,7 @@ export class Sentence {
   private calculateHashCode(): number {
     let result: number = 0;
     for (const position of this.positions) {
-      result += position;
+      result = Math.min(result, position);
     }
     return result;
   }
@@ -666,5 +664,13 @@ export class HashSet {
         yield sentence;
       }
     }
+  }
+
+  public toArray(): Sentence[] {
+    const result: Sentence[] = [];
+    for (const sentence of this) {
+      result.push(sentence);
+    }
+    return result;
   }
 }

@@ -11,7 +11,17 @@ const expectArraysAreSame = <T>(arr1: T[], arr2: T[]) => {
   for (const elem of arr2) {
     expect(arr1).toContainEqual(elem);
   }
-}
+};
+
+const expectSentencesAreSame = (arr1: Sentence[], arr2: Sentence[]) => {
+  expect(arr1.length).toBe(arr2.length);
+  for (const elem of arr1) {
+    expect(arr2.some(source => source.equals(elem))).toBeTruthy();
+  }
+  for (const elem of arr2) {
+    expect(arr1.some(source => source.equals(elem))).toBeTruthy();
+  }
+};
 
 describe("HashSet", () => {
   it("Insert and check equality/competing", () => {
@@ -50,7 +60,14 @@ describe("HashSet", () => {
     expect(set.findEqualSentence(Sentence.ofCount(new Set([3]), 1))).toBeFalsy();
     expect(set.findCompetingSentence(Sentence.ofCount(new Set([1, 2]), 1))).toBeTruthy();
     expect(set.findEqualSentence(Sentence.ofCount(new Set([1, 2]), 2))).toBeTruthy();
-  })
+  });
+
+  it("toArray method", () => {
+    const set = new HashSet(10);
+    set.insert(Sentence.ofCount(new Set([1, 2]), 2));
+    set.insert(Sentence.ofCount(new Set([3]), 1));
+    expectSentencesAreSame(set.toArray(), [Sentence.ofCount(new Set([1, 2]), 2), Sentence.ofCount(new Set([3]), 1)]);
+  });
 });
 
 describe("Solver", () => {

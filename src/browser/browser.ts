@@ -23,8 +23,8 @@ const numberRgb = [
 ];
 
 export type Coordinate = {
-  x: number,
-  y: number,
+  readonly x: number,
+  readonly y: number,
 };
 
 const sleep = (ms: number) => {
@@ -298,5 +298,82 @@ export class MineOnlineBrowserManager extends BrowserManager {
     return await this.getPage().evaluate(`
       document.getElementById('${coordinate.y + 1}_${coordinate.x + 1}')
       .classList.contains('bombdeath')`) as boolean;
+  }
+}
+
+export class MineDotOnlineBrowserManager extends BrowserManager {
+  protected override readonly url = "https://minesweeper.online/";
+
+  protected override readonly gameMode: GameMode;
+  protected override readonly xMax: number;
+  protected override readonly yMax: number;
+  private readonly halfWidth = 12;
+
+  constructor() {
+    super();
+    switch (AppConfig.gameMode) {
+      case "easy":
+        this.gameMode = GameMode.EASY;
+        this.xMax = 9;
+        this.yMax = 9;
+        break;
+      case "medium":
+        this.gameMode = GameMode.MEDIUM;
+        this.xMax = 16;
+        this.yMax = 16;
+        break;
+      case "hard":
+        this.gameMode = GameMode.HARD;
+        this.xMax = 30;
+        this.yMax = 16;
+        break;
+      default:
+        throw new Error(`Unrecognised game mode: ${AppConfig.gameMode}`);
+    }
+  }
+
+  public override async startGame(): Promise<void> {
+    let levelNumber: number;
+    switch (this.gameMode) {
+      case GameMode.EASY:
+        levelNumber = 1;
+        break;
+      case GameMode.MEDIUM:
+        levelNumber = 2;
+        break;
+      case GameMode.HARD:
+        levelNumber = 3;
+        break;
+    }
+    await this.getPage().evaluate(`
+      document.querySelector('a.level${levelNumber}-link').click()`);
+    await sleep(1000);
+  }
+
+  public override async getNum(x: number, y: number): Promise<number> {
+    const className = await this.getPage().evaluate(
+      `document.getElementById('cell_${x}_${y}').className;`) as string;
+    const testNumber = Number(className.slice(className.length - 2));
+    if (testNumber === 10 || testNumber === 11) {
+      return 8;
+    }
+    const number = Number(className[className.length - 1]);
+    if (isNaN(number)) {
+      return 8;
+    }
+    return number;
+  }
+
+  public override async openPosition(coordinate: Coordinate): Promise<void> {
+    const [x, y] = await this.getPage().evaluate(`
+      rect = document.getElementById('cell_${coordinate.x}_${coordinate.y}').getBoundingClientRect();
+      [rect.x, rect.y];`) as [number, number];
+    await this.getPage().mouse.click(x + this.halfWidth, y + this.halfWidth);
+  }
+
+  public override async isMine(coordinate: Coordinate): Promise<boolean> {
+    return await this.getPage().evaluate(`
+      classList = document.getElementById('cell_${coordinate.x}_${coordinate.y}').classList;
+      classList.contains('hd_type10') || classList.contains('hd_type11')`) as boolean;
   }
 }

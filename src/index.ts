@@ -1,5 +1,5 @@
 import { AppConfig } from "./appconfig";
-import { BrowserManager, GoogleBrowserManager, MineOnlineBrowserManager } from "./browser/browser";
+import { BrowserManager, GoogleBrowserManager, MineDotOnlineBrowserManager, MineOnlineBrowserManager } from "./browser/browser";
 
 async function main() {
   const browserManager: BrowserManager = pickManager();
@@ -39,6 +39,8 @@ function pickManager(): BrowserManager {
       return new GoogleBrowserManager();
     case "minesweeperonline":
       return new MineOnlineBrowserManager();
+    case "minesweeperdotonline":
+      return new MineDotOnlineBrowserManager();
     default:
       throw new Error(`Unrecognised site ${AppConfig.site}`);
   }

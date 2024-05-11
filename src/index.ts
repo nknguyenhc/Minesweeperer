@@ -1,8 +1,8 @@
 import { AppConfig } from "./appconfig";
-import { BrowserManager } from "./browser/browser";
+import { BrowserManager, GoogleBrowserManager } from "./browser/browser";
 
 async function main() {
-  const browserManager = new BrowserManager();
+  const browserManager: BrowserManager = new GoogleBrowserManager();
   await browserManager.launchAndGo();
   await browserManager.startGame();
   await browserManager.openInitial();

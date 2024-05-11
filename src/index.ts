@@ -2,7 +2,7 @@ import { AppConfig } from "./appconfig";
 import { BrowserManager, GoogleBrowserManager, MineOnlineBrowserManager } from "./browser/browser";
 
 async function main() {
-  const browserManager: BrowserManager = new MineOnlineBrowserManager();
+  const browserManager: BrowserManager = pickManager();
   await browserManager.launchAndGo();
   await browserManager.startGame();
   await browserManager.openInitial();
@@ -28,5 +28,16 @@ async function main() {
     await browserManager.close();
   }
 };
+
+function pickManager(): BrowserManager {
+  switch (AppConfig.site) {
+    case "google":
+      return new GoogleBrowserManager();
+    case "minesweeperonline":
+      return new MineOnlineBrowserManager();
+    default:
+      throw new Error(`Unrecognised site ${AppConfig.site}`);
+  }
+}
 
 main();

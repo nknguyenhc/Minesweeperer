@@ -111,12 +111,14 @@ export class BrowserManager {
   public async startGame() {
     // Open the minefield
     await (await this.getPage().$('.fxvhbc') as ElementHandle<Element>).click();
+    await sleep(100);
 
     // Mute
     await (await this.getPage().$('img.oO5WXb') as ElementHandle<Element>).click();
 
     // Select difficulty
     await (await this.getPage().$$('.CcNe6e'))[4].click();
+    await sleep(100);
     await (await this.getPage().$(`.EpPYLd.GZnQqe.WtV5nd[data-difficulty=${GameMode[this.gameMode]}]`) as ElementHandle<Element>).click();
     await sleep(100);
 

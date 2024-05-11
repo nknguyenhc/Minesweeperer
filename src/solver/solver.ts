@@ -1,5 +1,6 @@
 import assert from 'assert';
 import { Coordinate } from '../browser/browser';
+import { AppConfig } from '../appconfig';
 
 export class Solver {
   private cells: number[][];
@@ -8,7 +9,7 @@ export class Solver {
   private knowledge: Sentence[] = [];
   private readonly mines: boolean[][];
   private safes: Set<number> = new Set();
-  private readonly timeLimit = 1000;
+  private readonly timeLimit = AppConfig.stepThinkTime;
 
   constructor(width: number, height: number) {
     this.cells = Array(height).fill(undefined).map(() => Array(width).fill(8));

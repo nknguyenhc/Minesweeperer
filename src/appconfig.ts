@@ -9,6 +9,8 @@ export const AppConfig = {
   logImages: true,
   // Whether to log cells and actions to console, for debugging purposes
   logInfo: true,
+  // Time that the agent is allowed to think
+  stepThinkTime: 1000,
   // Wait time after opening cells, so that cell animations are over and cell reading is accurate
   stepWaitTime: 800,
   // Whether to save screenshot when the game is solved

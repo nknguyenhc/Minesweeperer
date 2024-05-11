@@ -9,14 +9,18 @@ async function main() {
   
   const solver = browserManager.getSolver();
   let cells = await browserManager.getNumbers();
-  let actions = solver.update(cells);
+  let [actions, watchOutForMine] = solver.update(cells);
   while (actions.length !== 0) {
     await browserManager.openPositions(actions);
+    if (watchOutForMine && await browserManager.isMine(actions[0])) {
+      console.log("Agent opened a mine cell");
+      break;
+    }
     cells = await browserManager.getNumbers();
     if (AppConfig.logInfo) {
       console.log(cells.map(row => row.join(' ')).join('\n'));
     }
-    actions = solver.update(cells);
+    [actions, watchOutForMine] = solver.update(cells);
     if (AppConfig.logInfo) {
       console.log(actions);
     }

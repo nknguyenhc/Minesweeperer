@@ -1,7 +1,9 @@
 # Minesweeperer
 Automate playing minesweeper on Google
 
-![result](./media/hard.png)
+![google](./media/google.png)
+
+![minesweeperonline](./media/minesweeperonline.png)
 
 ## Usage
 

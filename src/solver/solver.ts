@@ -32,9 +32,11 @@ export class Solver {
   /**
    * Updates the knowledge base with the new board.
    * @param cells The new board.
-   * @returns The cells that can be uncovered next.
+   * @returns The first element is the cells that can be uncovered next.
+   *          The second element is whether to watch out for bombs.
+   *          This is in the case that there are no known safe cell.
    */
-  public update(cells: number[][]): Coordinate[] {
+  public update(cells: number[][]): [Coordinate[], boolean] {
     const startTime = new Date().getTime();
     const oldCells = this.cells;
     this.cleanKnowledgeBase(cells);
@@ -250,14 +252,15 @@ export class Solver {
    * Returns the cells to open.
    * If there are safe cells, returns all safe cells.
    * If there are no safe cell, returns one random cell that is not surely a mine.
+   * Second element is whether to watch out for bomb, in the case that there is no known safe cell.
    */
-  private getCellsToOpen(): Coordinate[] {
+  private getCellsToOpen(): [Coordinate[], boolean] {
     if (this.safes.size > 0) {
-      return Array.from(this.safes).map(position => this.numToCoord(position));
+      return [Array.from(this.safes).map(position => this.numToCoord(position)), false];
     } else if (!this.isGameFinished()) {
-      return [this.randomCell()];
+      return [[this.randomCell()], true];
     } else {
-      return [];
+      return [[], false];
     }
   }
 

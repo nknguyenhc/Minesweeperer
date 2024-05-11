@@ -116,6 +116,8 @@ export abstract class BrowserManager {
     });
   }
 
+  public abstract isMine(coordinate: Coordinate): Promise<boolean>;
+
   public async close() {
     await this.getBrowser().close();
   }
@@ -130,6 +132,8 @@ export class GoogleBrowserManager extends BrowserManager {
   private readonly cellOffset = 1;
   private readonly cellWidth: number;
   private canvasPosition: Coordinate | undefined;
+  private readonly canvasQuerySelector = 'canvas.ecwpfc';
+  private readonly bombColorThreshold = 1000;
 
   constructor() {
     super();
@@ -173,7 +177,7 @@ export class GoogleBrowserManager extends BrowserManager {
 
     // Determine canvas position
     this.canvasPosition = await this.getPage().evaluate(`
-      const rect = document.querySelector('canvas.ecwpfc').getBoundingClientRect();
+      const rect = document.querySelector('${this.canvasQuerySelector}').getBoundingClientRect();
       result = { x: rect.x, y: rect.y };
       result`) as Coordinate;
   }
@@ -184,7 +188,7 @@ export class GoogleBrowserManager extends BrowserManager {
 
   protected override async getNum(x: number, y: number): Promise<number> {
     const imageData = await this.getPage().evaluate(
-      `document.querySelector('canvas.ecwpfc')
+      `document.querySelector('${this.canvasQuerySelector}')
         .getContext('2d')
         .getImageData(${(x + 0.5) * this.cellWidth + 1}, ${(y + 0.5) * this.cellWidth}, ${this.cellOffset}, ${this.cellOffset})`) as ImageData;
     const data = imageData.data;
@@ -211,6 +215,15 @@ export class GoogleBrowserManager extends BrowserManager {
       this.getCanvasPosition().y + (coordinate.y + 0.5) * this.cellWidth);
     await sleep(AppConfig.stepWaitTime);
     return;
+  }
+
+  public override async isMine(coordinate: Coordinate): Promise<boolean> {
+    const imageData = await this.getPage().evaluate(`
+      document.querySelector('${this.canvasQuerySelector}')
+        .getContext("2d")
+        .getImageData(${coordinate.x * this.cellWidth + 5}, ${coordinate.y * this.cellWidth + 5}, ${this.cellOffset}, ${this.cellOffset})`) as ImageData;
+    const data = imageData.data;
+    return this.distance(data, numberRgb[8]) > 30;
   }
 }
 
@@ -279,5 +292,11 @@ export class MineOnlineBrowserManager extends BrowserManager {
       `rect = document.getElementById('${coordinate.y + 1}_${coordinate.x + 1}').getBoundingClientRect();
       [rect.x, rect.y];`) as [number, number];
     await this.getPage().mouse.click(x + this.halfWidth, y + this.halfWidth);
+  }
+
+  public override async isMine(coordinate: Coordinate): Promise<boolean> {
+    return await this.getPage().evaluate(`
+      document.getElementById('${coordinate.y + 1}_${coordinate.x + 1}')
+      .classList.contains('bombdeath')`) as boolean;
   }
 }

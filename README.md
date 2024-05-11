@@ -1,5 +1,5 @@
 # Minesweeperer
-Automate playing minesweeper on Google
+Automate playing minesweeper on browser
 
 ![google](./media/google.png)
 

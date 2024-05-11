@@ -213,3 +213,71 @@ export class GoogleBrowserManager extends BrowserManager {
     return;
   }
 }
+
+export class MineOnlineBrowserManager extends BrowserManager {
+  protected override readonly url = "https://minesweeperonline.com/";
+
+  protected override readonly gameMode: GameMode;
+  protected override readonly xMax: number;
+  protected override readonly yMax: number;
+  private readonly halfWidth = 8;
+
+  constructor() {
+    super();
+    switch (AppConfig.gameMode) {
+      case "easy":
+        this.gameMode = GameMode.EASY;
+        this.xMax = 9;
+        this.yMax = 9;
+        break;
+      case "medium":
+        this.gameMode = GameMode.MEDIUM;
+        this.xMax = 16;
+        this.yMax = 16;
+        break;
+      case "hard":
+        this.gameMode = GameMode.HARD;
+        this.xMax = 30;
+        this.yMax = 16;
+        break;
+      default:
+        throw new Error(`Unrecognised game mode: ${AppConfig.gameMode}`);
+    }
+  }
+
+  public override async startGame(): Promise<void> {
+    // Select difficulty
+    let levelName: string;
+    switch (this.gameMode) {
+      case GameMode.EASY:
+        levelName = 'beginner';
+        break;
+      case GameMode.MEDIUM:
+        levelName = 'intermediate';
+        break;
+      case GameMode.HARD:
+        levelName = 'expert';
+        break;
+    }
+    await this.getPage().evaluate(`
+      document.getElementById('${levelName}').click();
+      document.querySelector('.dialogText').click();`);
+  }
+
+  public override async getNum(x: number, y: number): Promise<number> {
+    const className = await this.getPage().evaluate(
+      `document.getElementById('${y + 1}_${x + 1}').className;`) as string;
+    const number = Number(className[className.length - 1]);
+    if (isNaN(number)) {
+      return 8;
+    }
+    return number;
+  }
+
+  public override async openPosition(coordinate: Coordinate): Promise<void> {
+    const [x, y] = await this.getPage().evaluate(
+      `rect = document.getElementById('${coordinate.y + 1}_${coordinate.x + 1}').getBoundingClientRect();
+      [rect.x, rect.y];`) as [number, number];
+    await this.getPage().mouse.click(x + this.halfWidth, y + this.halfWidth);
+  }
+}

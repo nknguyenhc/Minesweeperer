@@ -13,7 +13,7 @@ export const AppConfig = {
   // If "google", the URL is "https://google.com/search?q=minesweeper"
   // If "minesweeperonline", the URL is "https://minesweeperonline.com/"
   // If "minesweeperdotonline", the URL is "https://minesweeper.online/"
-  site: "minesweeperdotonline",
+  site: "google",
   // Time that the agent is allowed to think
   stepThinkTime: 1000,
   // Wait time after opening cells, so that cell animations are over and cell reading is accurate

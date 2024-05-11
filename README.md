@@ -5,6 +5,8 @@ Automate playing minesweeper on Google
 
 ![minesweeperonline](./media/minesweeperonline.png)
 
+![minedot](./media/minedot.png)
+
 ## Usage
 
 Disclaimer: Running these are on the premise that you have installed chrome driver. This can be especially troublesome on linux. You can refer to [Puppeteer's official website](https://pptr.dev/) for more information.

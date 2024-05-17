@@ -22,6 +22,11 @@ const numberRgb = [
   [176, 212, 84], // not opened
 ];
 
+const openedCellsRbg = [
+  [228, 196, 156],
+  [216, 188, 156],
+]
+
 export type Coordinate = {
   readonly x: number,
   readonly y: number,
@@ -46,10 +51,7 @@ export abstract class BrowserManager {
   private count: number = 0;
 
   public async launchAndGo() {
-    // Create directory if it does not exist
-    if (!fs.existsSync(this.imageDirname)) {
-      fs.mkdirSync(this.imageDirname);
-    }
+    this.handleImagesFolder();
 
     this.browser = await puppeteer.launch({
       headless: !AppConfig.liveBrowser,
@@ -63,6 +65,22 @@ export abstract class BrowserManager {
     await this.page.goto(this.url);
     await this.page.waitForNetworkIdle();
   };
+
+  /**
+   * Deletes and creates the images folder, if `logImages` flag is turned on.
+   * This is to clean logs from the previous session.
+   */
+  private handleImagesFolder(): void {
+    if (!AppConfig.logImages) {
+      return;
+    }
+    if (fs.existsSync(this.imageDirname)) {
+      fs.rmSync(this.imageDirname, { recursive: true, force: true });
+    }
+    if (!fs.existsSync(this.imageDirname)) {
+      fs.mkdirSync(this.imageDirname);
+    }
+  }
 
   public getSolver(): Solver {
     return new Solver(this.xMax, this.yMax);
@@ -223,7 +241,9 @@ export class GoogleBrowserManager extends BrowserManager {
         .getContext("2d")
         .getImageData(${coordinate.x * this.cellWidth + 5}, ${coordinate.y * this.cellWidth + 5}, ${this.cellOffset}, ${this.cellOffset})`) as ImageData;
     const data = imageData.data;
-    return this.distance(data, numberRgb[8]) > 30;
+    return this.distance(data, numberRgb[8]) > 30
+      && this.distance(data, openedCellsRbg[0]) > 30
+      && this.distance(data, openedCellsRbg[1]) > 30;
   }
 }
 

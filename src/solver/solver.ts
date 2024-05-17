@@ -80,6 +80,9 @@ export class Solver {
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
         if (oldCells[i][j] !== 8) {
+          if (oldCells[i][j] !== this.cells[i][j]) {
+            console.log(`Wrong cell reading: ${i}, ${j}, ${oldCells[i][j]}, ${this.cells[i][j]}`);
+          }
           assert(oldCells[i][j] === this.cells[i][j]);
           continue;
         }

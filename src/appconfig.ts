@@ -14,6 +14,9 @@ export const AppConfig = {
   // If "minesweeperonline", the URL is "https://minesweeperonline.com/"
   // If "minesweeperdotonline", the URL is "https://minesweeper.online/"
   site: "google",
+  // Which solver to use, 'simple' or 'complex'.
+  // Simple solver is optimised for time, while complex solver can solve better.
+  solverMode: 'simple',
   // Time that the agent is allowed to think
   stepThinkTime: 1000,
   // Wait time after opening cells, so that cell animations are over and cell reading is accurate

@@ -1,7 +1,8 @@
 import puppeteer, { Browser, ElementHandle, Page } from "puppeteer";
 import { AppConfig } from "../appconfig";
 import fs from 'fs';
-import { Solver } from "../solver/solver";
+import { ISolver, Solver } from "../solver/solver";
+import { SimpleSolver } from "../solver/simple-solver";
 
 enum GameMode {
   EASY,
@@ -82,8 +83,15 @@ export abstract class BrowserManager {
     }
   }
 
-  public getSolver(): Solver {
-    return new Solver(this.xMax, this.yMax);
+  public getSolver(): ISolver {
+    switch (AppConfig.solverMode) {
+      case 'complex':
+        return new Solver(this.xMax, this.yMax);
+      case 'simple':
+        return new SimpleSolver(this.xMax, this.yMax);
+      default:
+        throw new Error(`Unrecognised solver mode: ${AppConfig.solverMode}`);
+    }
   }
 
   protected getPage(): Page {

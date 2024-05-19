@@ -2,7 +2,11 @@ import assert from 'assert';
 import { Coordinate } from '../browser/browser';
 import { AppConfig } from '../appconfig';
 
-export class Solver {
+export abstract class ISolver {
+  public abstract update(cells: number[][]): [Coordinate[], boolean];
+}
+
+export class Solver extends ISolver {
   private cells: number[][];
   private readonly width: number;
   private readonly height: number;
@@ -12,6 +16,7 @@ export class Solver {
   private readonly timeLimit = AppConfig.stepThinkTime;
 
   constructor(width: number, height: number) {
+    super();
     this.cells = Array(height).fill(undefined).map(() => Array(width).fill(8));
     this.width = width;
     this.height = height;
@@ -36,7 +41,7 @@ export class Solver {
    *          The second element is whether to watch out for bombs.
    *          This is in the case that there are no known safe cell.
    */
-  public update(cells: number[][]): [Coordinate[], boolean] {
+  public override update(cells: number[][]): [Coordinate[], boolean] {
     const startTime = new Date().getTime();
     const oldCells = this.cells;
     this.cleanKnowledgeBase(cells);

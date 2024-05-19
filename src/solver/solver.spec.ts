@@ -46,7 +46,7 @@ describe("Solver", () => {
         y: 5,
       },
     ];
-    expectArraysAreSame(solver.update(cells), expectedMoves);
+    expectArraysAreSame(solver.update(cells)[0], expectedMoves);
 
     cells = [
       [0, 1, 2, 8],
@@ -80,7 +80,7 @@ describe("Solver", () => {
         y: 5,
       },
     ];
-    expectArraysAreSame(solver.update(cells), expectedMoves);
+    expectArraysAreSame(solver.update(cells)[0], expectedMoves);
   });
 
   it("Initial board with counts 1, 2, 3", () => {
@@ -171,7 +171,7 @@ describe("Solver", () => {
       },
     ];
 
-    expectArraysAreSame(solver.update(cells), expectedMoves);
+    expectArraysAreSame(solver.update(cells)[0], expectedMoves);
   });
 
   it("Initial board with counts 1, 2, 3, 4", () => {
@@ -266,7 +266,7 @@ describe("Solver", () => {
       },
     ];
 
-    expectArraysAreSame(solver.update(cells), expectedMoves);
+    expectArraysAreSame(solver.update(cells)[0], expectedMoves);
 
     cells = [
       [1, 2, 8, 1, 1, 1, 1, 0, 0, 1, 8, 8, 8, 8, 8, 8],
@@ -334,7 +334,7 @@ describe("Solver", () => {
       },
     ];
 
-    expectArraysAreSame(solver.update(cells), expectedMoves);
+    expectArraysAreSame(solver.update(cells)[0], expectedMoves);
   });
 
   it("Should not uncover cell with mine when stuck", () => {

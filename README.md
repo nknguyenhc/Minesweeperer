@@ -117,6 +117,31 @@ Forward chaining repeats until one of the following conditions is true:
 
 The timeout condition ensures that the agent does not spend too much time discover every possible safe cell. This ensures the efficiency of the programme.
 
+### Optimisation for time
+
+Notice that the above algorithm may contain a lot of sentences in the knowledge base. This makes the process of forward chaining very time-consuming.
+
+I therefore used a lighter algorithm optimised for time. Each sentence in this algorithm only contains the following:
+
+* `cells`: The set of cells this sentence is pointing to.
+* `count`: The number of mines that this cell contains.
+
+I.e. `upper == lower`. For two sentences, at most one sentence can be derived. The new sentence is derived only in the case that set of cells in sentence 1 is subset of set of cells in sentence 2, or vice versa. The new sentence therefore contains the difference in sets of cells and difference in counts.
+
+Sentences can be used in the same manner to derive the safe cells and mines:
+
+* If `count` is `0`, all cells in the sentence are safe cells.
+* If `count` equals the number of cells, all cells in the sentence are mines.
+
+The main routine for the new algorithm remains largely the same as above.
+
+The new algorithm is more optimised for time than the above algorithm for the following reasons:
+
+* The conditions for deriving new sentences from each pair are stricter, hence less sentences are derived. Meanwhile, due to the corners in the map of opened cells, safe cells and mines can still be efficiently derived.
+* Equality condition for sentences is looser, as we now only need to compare the sets of cells to determine equality of sentences. As we do not add same sentences to the knowledge base, the knowledge base is smaller.
+
+Admittedly, the new algorithm may not be able to solve more complex boards. However, the new algorithm is observed to be able to solve the puzzles most of the time in Google minesweeper.
+
 ## Known issues
 
 There are some known issues that happen sporadically.

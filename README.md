@@ -155,3 +155,17 @@ This is because of inconsistencies in the google page. You can simply run the sc
 On the google minesweeper page, it animates for a short period of time when a cell is uncovered. This means that detection of numbers in some cells might be inconsistent. The decision to set wait time after opening cells of 800 is made to balance between the accuracy of cell reading and the runtime.
 
 Furthermore, my tests have never encountered number 7. I cannot know for sure if the script can detect number 7 correctly. In any case that the script fails, you can always run again.
+
+3. Detection of mines.
+
+The agent has to click randomly because there are no known safe cells to open. On Google, the script may stop because the browser manager thinks that the agent has opened a mine cell, but in fact the agent has opened a safe cell.
+
+I am not too sure when it misbehaves as such. To be investigated.
+
+4. Script does not stop after closing browser.
+
+This is because there is a timeout for screenshot. You may turn off final screenshot in `appconfig.ts`:
+
+```
+saveScreenshot: false,
+```

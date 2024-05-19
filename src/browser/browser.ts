@@ -249,9 +249,10 @@ export class GoogleBrowserManager extends BrowserManager {
         .getContext("2d")
         .getImageData(${coordinate.x * this.cellWidth + 5}, ${coordinate.y * this.cellWidth + 5}, ${this.cellOffset}, ${this.cellOffset})`) as ImageData;
     const data = imageData.data;
-    return this.distance(data, numberRgb[8]) > 30
-      && this.distance(data, openedCellsRbg[0]) > 30
-      && this.distance(data, openedCellsRbg[1]) > 30;
+    const threshold = 40;
+    return this.distance(data, numberRgb[8]) > threshold
+      && this.distance(data, openedCellsRbg[0]) > threshold
+      && this.distance(data, openedCellsRbg[1]) > threshold;
   }
 }
 

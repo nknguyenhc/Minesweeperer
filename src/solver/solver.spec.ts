@@ -3,7 +3,7 @@ import { describe, it } from "mocha";
 import expect from "expect";
 import { Coordinate } from "../browser/browser";
 
-const expectArraysAreSame = (arr1: Coordinate[], arr2: Coordinate[]) => {
+export const expectArraysAreSame = (arr1: Coordinate[], arr2: Coordinate[]) => {
   if (arr1.length !== arr2.length) {
     expect(true).toBe(false);
   }
@@ -361,7 +361,7 @@ describe("Solver", () => {
     for (let i = 0; i < 100; i++) {
       const solver = new Solver(3, 3);
       const moves = solver.update(cells());
-      expect(moves).toHaveLength(1);
+      expect(moves[0]).toHaveLength(1);
       expect(mines).not.toContain(moves[0]);
     }
   });
@@ -374,6 +374,6 @@ describe("Solver", () => {
     ];
 
     const solver = new Solver(3, 3);
-    expect(solver.update(cells)).toEqual([]);
+    expect(solver.update(cells)[0]).toEqual([]);
   });
 });

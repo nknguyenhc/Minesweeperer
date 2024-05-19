@@ -12,10 +12,10 @@ export class SimpleSolver extends ISolver {
 
   constructor(width: number, height: number) {
     super();
-    this.cells = Array(height).fill(Array(width).fill(8));
+    this.cells = Array(height).fill(undefined).map(() => Array(width).fill(8));
     this.width = width;
     this.height = height;
-    this.mines = Array(height).fill(Array(width).fill(false));
+    this.mines = Array(height).fill(undefined).map(() => Array(width).fill(false));
   }
 
   private numToCoord(num: number): Coordinate {
@@ -142,6 +142,9 @@ export class SimpleSolver extends ISolver {
     for (let ii = i - 1; ii <= i + 1; ii++) {
       for (let jj = j - 1; jj <= j + 1; jj++) {
         if (ii === i && jj === j) {
+          continue;
+        }
+        if (ii < 0 || ii >= this.height || jj < 0 || jj >= this.width) {
           continue;
         }
         const num = this.coordToNum({ x: jj, y: ii });

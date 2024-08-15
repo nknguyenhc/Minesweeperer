@@ -12,7 +12,7 @@ export class SimpleSolver extends ISolver {
 
   constructor(width: number, height: number) {
     super();
-    this.cells = Array(height).fill(undefined).map(() => Array(width).fill(8));
+    this.cells = Array(height).fill(undefined).map(() => Array(width).fill(-1));
     this.width = width;
     this.height = height;
     this.mines = Array(height).fill(undefined).map(() => Array(width).fill(false));
@@ -36,7 +36,7 @@ export class SimpleSolver extends ISolver {
 
   public isSureSafe(cell: number): boolean {
     const coord = this.numToCoord(cell);
-    return this.safes.has(cell) || this.cells[coord.y][coord.x] !== 8;
+    return this.safes.has(cell) || this.cells[coord.y][coord.x] !== -1;
   }
 
   public override update(cells: number[][]): [Coordinate[], boolean] {
@@ -117,14 +117,14 @@ export class SimpleSolver extends ISolver {
     const newSentences: Sentence[] = [];
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
-        if (oldCells[i][j] !== 8) {
+        if (oldCells[i][j] !== -1) {
           if (oldCells[i][j] !== this.cells[i][j]) {
             console.log(`Wrong cell reading: ${i}, ${j}, ${oldCells[i][j]}, ${this.cells[i][j]}`);
           }
           assert(oldCells[i][j] === this.cells[i][j]);
           continue;
         }
-        if (this.cells[i][j] === 8) {
+        if (this.cells[i][j] === -1) {
           continue;
         }
         const newSentence = this.getCellSentence(i, j);
@@ -250,7 +250,7 @@ export class SimpleSolver extends ISolver {
   private isGameFinished(): boolean {
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
-        if (this.cells[i][j] === 8 && !this.mines[i][j]) {
+        if (this.cells[i][j] === -1 && !this.mines[i][j]) {
           return false;
         }
       }
@@ -265,7 +265,7 @@ export class SimpleSolver extends ISolver {
     let count = 0;
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
-        if (this.cells[i][j] === 8 && !this.mines[i][j]) {
+        if (this.cells[i][j] === -1 && !this.mines[i][j]) {
           count++;
         }
       }
@@ -275,7 +275,7 @@ export class SimpleSolver extends ISolver {
     count = 0;
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
-        if (this.cells[i][j] === 8 && !this.mines[i][j]) {
+        if (this.cells[i][j] === -1 && !this.mines[i][j]) {
           if (count === index) {
             return {
               x: j,

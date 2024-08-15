@@ -11,6 +11,8 @@ enum GameMode {
 };
 
 // Approximate colours only
+const notOpenedRgb = [176, 212, 84];
+
 const numberRgb = [
   [232, 196, 156], // 0
   [19, 117, 209], // 1
@@ -20,7 +22,6 @@ const numberRgb = [
   [245, 151, 27], // 5
   [27, 153, 163], // 6
   [98, 88, 80], // 7
-  [176, 212, 84], // not opened
 ];
 
 const openedCellsRbg = [
@@ -220,12 +221,16 @@ export class GoogleBrowserManager extends BrowserManager {
 
     let number: number = 0;
     let smallestDistance: number = 3 * 255 ** 2;
-    for (let i = 0; i <= 8; i++) {
+    for (let i = 0; i <= 7; i++) {
       const newDistance = this.distance(data, numberRgb[i]);
       if (newDistance < smallestDistance) {
         smallestDistance = newDistance;
         number = i;
       }
+    }
+    const notOpenedDistance = this.distance(data, notOpenedRgb);
+    if (notOpenedDistance < smallestDistance) {
+      return -1;
     }
     return number;
   }
@@ -249,7 +254,7 @@ export class GoogleBrowserManager extends BrowserManager {
         .getImageData(${coordinate.x * this.cellWidth + 5}, ${coordinate.y * this.cellWidth + 5}, ${this.cellOffset}, ${this.cellOffset})`) as ImageData;
     const data = imageData.data;
     const threshold = 40;
-    return this.distance(data, numberRgb[8]) > threshold
+    return this.distance(data, notOpenedRgb) > threshold
       && this.distance(data, openedCellsRbg[0]) > threshold
       && this.distance(data, openedCellsRbg[1]) > threshold;
   }
@@ -310,7 +315,7 @@ export class MineOnlineBrowserManager extends BrowserManager {
       `document.getElementById('${y + 1}_${x + 1}').className;`) as string;
     const number = Number(className[className.length - 1]);
     if (isNaN(number)) {
-      return 8;
+      return -1;
     }
     return number;
   }
@@ -383,11 +388,11 @@ export class MineDotOnlineBrowserManager extends BrowserManager {
       `document.getElementById('cell_${x}_${y}').className;`) as string;
     const testNumber = Number(className.slice(className.length - 2));
     if (testNumber === 10 || testNumber === 11) {
-      return 8;
+      return -1;
     }
     const number = Number(className[className.length - 1]);
     if (isNaN(number)) {
-      return 8;
+      return -1;
     }
     return number;
   }

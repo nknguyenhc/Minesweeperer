@@ -1,19 +1,16 @@
-import { SimpleSolver } from "../solver/simple-solver";
-import { ISolver } from "../solver/solver";
+import { Coordinate, ISolver, Solver } from "../solver/solver";
 
 function readline(): string {
   return '';
 }
 
 class Codingame {
-  readonly solver: ISolver;
   readonly h: number = 16;
   readonly w: number = 30;
+  readonly solver: ISolver = new Solver(this.w, this.h);
   isFirstTime: boolean = true;
-
-  constructor() {
-    this.solver = new SimpleSolver(this.w, this.h);
-  }
+  readonly actions: Coordinate[] = [];
+  pointer: number = 0;
 
   run(): void {
     while (true) {
@@ -27,7 +24,7 @@ class Codingame {
     }
   }
 
-  getCells(): number[][] {
+  private getCells(): number[][] {
     const cells: number[][] = [];
     for (let i = 0; i < this.h; i++) {
       const inputs: string[] = readline().split(' ');
@@ -51,7 +48,7 @@ class Codingame {
     return cells;
   }
 
-  readCells(): void {
+  private readCells(): void {
     for (let i = 0; i < this.h; i++) {
       readline();
     }
@@ -62,12 +59,17 @@ class Codingame {
   }
 
   handleCells(cells: number[][]): void {
-    const [actions, _] = this.solver.update(cells);
-    for (const [i, action] of actions.entries()) {
-      if (i > 0) {
-        this.readCells();
-      }
+    const [actions, watchForMines] = this.solver.update(cells);
+    if (!watchForMines) {
+      this.actions.push(...actions);
+    }
+    const action = this.actions[this.pointer];
+    if (action) {
       console.log(`${action.x} ${action.y}`);
+      this.pointer++;
+    } else {
+      const randomAction = actions[0];
+      console.log(`${randomAction.x} ${randomAction.y}`);
     }
   }
 }

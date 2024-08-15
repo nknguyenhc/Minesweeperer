@@ -22,18 +22,10 @@ def read_codingame_file(file_path: str = 'src/codingame/codingame.ts') -> str:
 def get_config() -> dict:
     return {
         "files": [
-            "src/solver/simple-solver.ts",
+            "src/appconfig.ts",
+            "src/solver/solver.ts",
         ],
-        "initials": """
-        type Coordinate = {
-            readonly x: number,
-            readonly y: number,
-        };
-
-        abstract class ISolver {
-            public abstract update(cells: number[][]): [Coordinate[], boolean];
-        }
-        """
+        "initials": "",
     }
 
 def main():

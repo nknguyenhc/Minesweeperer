@@ -1,6 +1,10 @@
 import assert from 'assert';
-import { Coordinate } from '../browser/browser';
 import { AppConfig } from '../appconfig';
+
+export type Coordinate = {
+  readonly x: number,
+  readonly y: number,
+};
 
 export abstract class ISolver {
   public abstract update(cells: number[][]): [Coordinate[], boolean];

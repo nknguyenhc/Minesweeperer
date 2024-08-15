@@ -1,7 +1,7 @@
 import puppeteer, { Browser, ElementHandle, Page } from "puppeteer";
 import { AppConfig } from "../appconfig";
 import fs from 'fs';
-import { ISolver, Solver } from "../solver/solver";
+import { Coordinate, ISolver, Solver } from "../solver/solver";
 import { SimpleSolver } from "../solver/simple-solver";
 
 enum GameMode {
@@ -28,11 +28,6 @@ const openedCellsRbg = [
   [228, 196, 156],
   [216, 188, 156],
 ]
-
-export type Coordinate = {
-  readonly x: number,
-  readonly y: number,
-};
 
 const sleep = (ms: number) => {
   return new Promise(resolve => setTimeout(resolve, ms));

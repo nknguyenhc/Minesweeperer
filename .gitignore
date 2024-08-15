@@ -1,6 +1,9 @@
 # images
 images
 
+# compiled script
+combined.ts
+
 # package-lock
 package-lock.json
 

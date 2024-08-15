@@ -1,5 +1,4 @@
-import { Coordinate } from "../browser/browser";
-import { ISolver } from "./solver";
+import { Coordinate, ISolver } from "./solver";
 import assert from 'assert';
 
 export class SimpleSolver extends ISolver {

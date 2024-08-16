@@ -9,7 +9,7 @@ async function main() {
   
   const solver = browserManager.getSolver();
   let cells = await browserManager.getNumbers();
-  let [actions, watchOutForMine] = solver.update(cells);
+  let [actions, watchOutForMine] = solver.update(cells, AppConfig.stepThinkTime);
   while (actions.length !== 0) {
     await browserManager.openPositions(actions);
     if (watchOutForMine && await browserManager.isMine(actions[0])) {
@@ -20,7 +20,7 @@ async function main() {
     if (AppConfig.logInfo) {
       console.log(cells.map(row => row.join(' ')).join('\n'));
     }
-    [actions, watchOutForMine] = solver.update(cells);
+    [actions, watchOutForMine] = solver.update(cells, AppConfig.stepThinkTime);
     if (AppConfig.logInfo) {
       console.log(actions);
     }

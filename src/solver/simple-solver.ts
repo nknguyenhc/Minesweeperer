@@ -38,7 +38,7 @@ export class SimpleSolver extends ISolver {
     return this.safes.has(cell) || this.cells[coord.y][coord.x] !== -1;
   }
 
-  public override update(cells: number[][]): [Coordinate[], boolean] {
+  public override update(cells: number[][], timeLimit?: number): [Coordinate[], boolean] {
     const oldCells = this.cells;
     this.cleanKnowledgeBase(cells);
 

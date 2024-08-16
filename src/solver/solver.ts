@@ -1,5 +1,4 @@
 import assert from 'assert';
-import { AppConfig } from '../appconfig';
 
 export type Coordinate = {
   readonly x: number,
@@ -7,7 +6,7 @@ export type Coordinate = {
 };
 
 export abstract class ISolver {
-  public abstract update(cells: number[][]): [Coordinate[], boolean];
+  public abstract update(cells: number[][], timeLimit?: number): [Coordinate[], boolean];
 }
 
 export class Solver extends ISolver {
@@ -17,7 +16,6 @@ export class Solver extends ISolver {
   private knowledge: Sentence[] = [];
   private readonly mines: boolean[][];
   private safes: Set<number> = new Set();
-  private readonly timeLimit = AppConfig.stepThinkTime;
 
   constructor(width: number, height: number) {
     super();
@@ -45,14 +43,14 @@ export class Solver extends ISolver {
    *          The second element is whether to watch out for bombs.
    *          This is in the case that there are no known safe cell.
    */
-  public override update(cells: number[][]): [Coordinate[], boolean] {
+  public override update(cells: number[][], timeLimit?: number): [Coordinate[], boolean] {
     const startTime = new Date().getTime();
     const oldCells = this.cells;
     this.cleanKnowledgeBase(cells);
     let newSentences: Sentence[] = this.createNewSentences(oldCells);
     let isNewKnowledgeAdded = true;
     while (isNewKnowledgeAdded || newSentences.length > 0) {
-      if (new Date().getTime() - startTime > this.timeLimit) {
+      if (timeLimit && new Date().getTime() - startTime > timeLimit) {
         break;
       }
       isNewKnowledgeAdded = this.addSentences(newSentences);

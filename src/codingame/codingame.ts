@@ -1,35 +1,33 @@
-import { Coordinate, ISolver, Solver } from "../solver/solver";
+import { Coordinate, Solver } from "../solver/solver";
+import { isMainThread, parentPort, Worker } from "worker_threads";
 
 function readline(): string {
   return '';
 }
 
+const h: number = 16;
+const w: number = 30;
+
 class Codingame {
-  readonly h: number = 16;
-  readonly w: number = 30;
-  readonly solver: ISolver = new Solver(this.w, this.h);
-  isFirstTime: boolean = true;
   readonly actions: Coordinate[] = [];
   pointer: number = 0;
+  cells: number[][] = [];
+  readonly timePerStep: number = 49;
+  randomAction: Coordinate = { x: 15, y: 7 };
 
   run(): void {
-    while (true) {
-      if (this.isFirstTime) {
-        this.readCells();
-        this.openFirstCell();
-        this.isFirstTime = false;
-      }
-      const cells = this.getCells();
-      this.handleCells(cells);
-    }
+    this.readCells();
+    this.openCell();
+    setInterval(() => this.openCell(), this.timePerStep);
+    this.solve(this.timePerStep);
   }
 
-  private getCells(): number[][] {
+  private getCells(): void {
     const cells: number[][] = [];
-    for (let i = 0; i < this.h; i++) {
+    for (let i = 0; i < h; i++) {
       const inputs: string[] = readline().split(' ');
       const line: number[] = [];
-      for (let j = 0; j < this.w; j++) {
+      for (let j = 0; j < w; j++) {
         const cell: string = inputs[j]; // '?' if unknown, '.' if no mines nearby, '1'-'8' otherwise
         switch (cell) {
           case '?':
@@ -45,33 +43,47 @@ class Codingame {
       }
       cells.push(line);
     }
-    return cells;
+    this.cells = cells;
   }
 
   private readCells(): void {
-    for (let i = 0; i < this.h; i++) {
+    for (let i = 0; i < h; i++) {
       readline();
     }
   }
 
-  openFirstCell(): void {
-    console.log('15 7');
+  private solve(timeLimit: number): void {
+    const worker = new Worker(__filename);
+    worker.postMessage({ cells: this.cells, timeLimit: timeLimit });
+    worker.on('message', (result: [Coordinate[], boolean]) => {
+      const [actions, watchOutForMine] = result;
+      if (!watchOutForMine) {
+        this.actions.push(...actions);
+      } else {
+        this.randomAction = actions[0];
+      }
+      worker.postMessage({ cells: this.cells, timeLimit: this.timePerStep * actions.length });
+    });
   }
 
-  handleCells(cells: number[][]): void {
-    const [actions, watchForMines] = this.solver.update(cells);
-    if (!watchForMines) {
-      this.actions.push(...actions);
-    }
+  private openCell(): void {
     const action = this.actions[this.pointer];
     if (action) {
       console.log(`${action.x} ${action.y}`);
       this.pointer++;
     } else {
-      const randomAction = actions[0];
-      console.log(`${randomAction.x} ${randomAction.y}`);
+      console.log(`${this.randomAction.x} ${this.randomAction.y}`);
     }
+    this.getCells();
   }
 }
 
-new Codingame().run();
+if (isMainThread) {
+  new Codingame().run();
+} else {
+  const solver = new Solver(w, h);
+  parentPort!.on('message', (data: { cells: number[][], timeLimit: number }) => {
+    const result = solver.update(data.cells, data.timeLimit);
+    parentPort!.postMessage(result);
+  });
+}

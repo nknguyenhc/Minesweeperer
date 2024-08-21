@@ -12,9 +12,9 @@ def read_codingame_file(file_path: str = 'src/codingame/codingame.ts') -> str:
     with open(file_path, 'r') as file:
         lines = file.readlines()
     
-    # ignore until the first line with `class`
+    # ignore until the first line with `const`
     for i, line in enumerate(lines):
-        if line.startswith('class'):
+        if line.startswith('const'):
             break
     lines = lines[i:]
     return ''.join(lines)
@@ -22,10 +22,9 @@ def read_codingame_file(file_path: str = 'src/codingame/codingame.ts') -> str:
 def get_config() -> dict:
     return {
         "files": [
-            "src/appconfig.ts",
             "src/solver/solver.ts",
         ],
-        "initials": "",
+        "initials": "import { isMainThread, parentPort, Worker } from \"worker_threads\";",
     }
 
 def main():

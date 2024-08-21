@@ -7,6 +7,8 @@ Automate playing minesweeper on browser
 
 ![minedot](./media/minedot.png)
 
+![codingame](./media/codingame.png)
+
 ## Usage
 
 Disclaimer: Running these are on the premise that you have installed chrome driver. This can be especially troublesome on linux. You can refer to [Puppeteer's official website](https://pptr.dev/) for more information.
@@ -141,6 +143,15 @@ The new algorithm is more optimised for time than the above algorithm for the fo
 * Equality condition for sentences is looser, as we now only need to compare the sets of cells to determine equality of sentences. As we do not add same sentences to the knowledge base, the knowledge base is smaller.
 
 Admittedly, the new algorithm may not be able to solve more complex boards. However, the new algorithm is observed to be able to solve the puzzles most of the time in Google minesweeper.
+
+### Codingame
+
+On Codingame platform, time allowed for each move is only 50ms. I therefore had to optimise search routine to fit the new requirement. There are two parallel routines:
+
+* Solving the puzzle
+* Regular printing of moves.
+
+To run these two in parallel, I use `worker_threads` built-in library, and use `postMessage` and `on("message")` APIs to pass data between threads.
 
 ## Known issues
 

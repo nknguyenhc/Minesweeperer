@@ -15,6 +15,9 @@ class Codingame {
   readonly timePerStep: number = 49;
   randomAction: Coordinate = { x: 15, y: 7 };
 
+  /**
+   * Main routine to interact with stdio.
+   */
   run(): void {
     this.readCells();
     this.openCell();
@@ -22,6 +25,9 @@ class Codingame {
     this.solve(this.timePerStep);
   }
 
+  /**
+   * Reads the cell from stdin and stores it in the cells array.
+   */
   private getCells(): void {
     const cells: number[][] = [];
     for (let i = 0; i < h; i++) {
@@ -46,12 +52,19 @@ class Codingame {
     this.cells = cells;
   }
 
+  /**
+   * Reads the cells from stdin, without storing the info.
+   */
   private readCells(): void {
     for (let i = 0; i < h; i++) {
       readline();
     }
   }
 
+  /**
+   * Instantiates child worker for the solver.
+   * @param timeLimit The time limit for the solver to run.
+   */
   private solve(timeLimit: number): void {
     const worker = new Worker(__filename);
     worker.postMessage({ cells: this.cells, timeLimit: timeLimit });
@@ -66,6 +79,9 @@ class Codingame {
     });
   }
 
+  /**
+   * Opens a cell on the board by printing to stdout.
+   */
   private openCell(): void {
     const action = this.actions[this.pointer];
     if (action) {

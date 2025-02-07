@@ -184,12 +184,16 @@ export class GoogleBrowserManager extends BrowserManager {
   }
 
   public override async startGame(): Promise<void> {
+    if (AppConfig.captcha) {
+      await new Promise((resolve) => setTimeout(resolve, 20000));
+    }
+
     // Open the minefield
     await (await this.getPage().$('.fxvhbc') as ElementHandle<Element>).click();
     await sleep(100);
 
     // Mute
-    await (await this.getPage().$('img.oO5WXb') as ElementHandle<Element>).click();
+    await (await this.getPage().$('.oO5WXb') as ElementHandle<Element>).click();
 
     // Select difficulty
     await this.getPage().evaluate(`

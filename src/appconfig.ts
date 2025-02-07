@@ -14,6 +14,8 @@ export const AppConfig = {
   // If "minesweeperonline", the URL is "https://minesweeperonline.com/"
   // If "minesweeperdotonline", the URL is "https://minesweeper.online/"
   site: "google",
+  // Takes the value of 'true' if you need to complete a captcha before playing
+  captcha: true,
   // Which solver to use, 'simple' or 'complex'.
   // Simple solver is optimised for time, while complex solver can solve better.
   solverMode: 'simple',
